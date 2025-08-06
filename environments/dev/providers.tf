@@ -10,6 +10,15 @@ terraform {
       version = "~> 6.0"
     }
   }
+  
+  # Backend configuration using S3 with native locking
+  backend "s3" {
+    bucket       = "backend-booking-terraform-state-826601724385"
+    key          = "dev/terraform.tfstate"
+    region       = "eu-west-2"
+    encrypt      = true
+    use_lockfile = true  # Enable S3 native state locking (Terraform >= 1.10)
+  }
 }
 
 # AWS Provider Configuration

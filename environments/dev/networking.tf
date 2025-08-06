@@ -154,39 +154,3 @@ resource "aws_security_group" "redis" {
     Environment = var.environment
   }
 }
-
-# Outputs for use in other configurations
-output "vpc_id" {
-  description = "VPC ID"
-  value       = module.networking.vpc_id
-}
-
-output "public_subnet_id" {
-  description = "Public subnet ID"
-  value       = module.networking.public_subnet_id
-}
-
-output "private_subnet_id" {
-  description = "Private subnet ID"
-  value       = module.networking.private_subnet_id
-}
-
-output "alb_security_group_id" {
-  description = "ALB security group ID"
-  value       = aws_security_group.alb.id
-}
-
-output "ecs_security_group_id" {
-  description = "ECS tasks security group ID"
-  value       = aws_security_group.ecs_tasks.id
-}
-
-output "rds_security_group_id" {
-  description = "RDS security group ID"
-  value       = aws_security_group.rds.id
-}
-
-output "redis_security_group_id" {
-  description = "Redis security group ID"
-  value       = aws_security_group.redis.id
-}
