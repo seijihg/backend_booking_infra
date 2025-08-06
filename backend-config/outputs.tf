@@ -22,7 +22,7 @@ output "backend_configuration" {
   description = "Backend configuration to use in your Terraform environments with S3 native locking"
   value = {
     bucket       = module.terraform_backend.s3_bucket_id
-    key          = "<environment>/terraform.tfstate"  # Update <environment> with dev/staging/prod
+    key          = "<environment>/terraform.tfstate"  # Update <environment> with dev/prod
     region       = module.terraform_backend.s3_bucket_region
     encrypt      = true
     use_lockfile = true  # Enable S3 native locking

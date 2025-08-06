@@ -37,7 +37,7 @@ output "backend_config_example" {
       
       backend "s3" {
         bucket       = "${aws_s3_bucket.terraform_state.id}"
-        key          = "environment/terraform.tfstate"  # Change 'environment' to dev/staging/prod
+        key          = "environment/terraform.tfstate"  # Change 'environment' to dev/prod
         region       = "${aws_s3_bucket.terraform_state.region}"
         encrypt      = true
         use_lockfile = true  # Enable S3 native state locking (no DynamoDB needed)

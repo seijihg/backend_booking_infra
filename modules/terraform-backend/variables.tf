@@ -8,11 +8,11 @@ variable "bucket_name" {
 }
 
 variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod, shared)"
+  description = "Environment name (e.g., dev, prod, shared)"
   type        = string
   validation {
-    condition     = contains(["dev", "staging", "prod", "shared"], var.environment)
-    error_message = "Environment must be one of: dev, staging, prod, shared."
+    condition     = contains(["dev", "prod", "shared"], var.environment)
+    error_message = "Environment must be one of: dev, prod, shared."
   }
 }
 

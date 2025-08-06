@@ -88,8 +88,8 @@ terraform {
 
   backend "s3" {
     bucket       = "backend-booking-terraform-state-123456789012"
-    key          = "dev/terraform.tfstate"  # Use dev/staging/prod
-    region       = "us-east-1"
+    key          = "dev/terraform.tfstate"  # Use dev/prod
+    region       = "eu-west-2"
     encrypt      = true
     use_lockfile = true  # Enable S3 native state locking
   }
