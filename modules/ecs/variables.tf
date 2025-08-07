@@ -136,31 +136,37 @@ variable "database_name" {
   type        = string
 }
 
-# Secrets Manager ARNs
-variable "secrets_arns" {
-  description = "List of Secrets Manager ARNs that ECS tasks need access to"
-  type        = list(string)
+# Seed Data Configuration (non-sensitive)
+variable "seed_data" {
+  description = "Seed data configuration for initial setup (non-sensitive data)"
+  type = object({
+    salon = object({
+      name        = string
+      street      = string
+      city        = string
+      postal_code = string
+    })
+    owner = object({
+      email      = string
+      first_name = string
+      last_name  = string
+      full_name  = string
+    })
+  })
+  default = null
 }
 
-variable "django_secret_arn" {
-  description = "ARN of the Django secret in Secrets Manager"
+# Seed Owner Password (separate for security)
+variable "seed_owner_password" {
+  description = "Seed owner default password"
   type        = string
+  sensitive   = true
+  default     = ""
 }
 
-variable "database_secret_arn" {
-  description = "ARN of the database secret in Secrets Manager"
-  type        = string
-}
-
-variable "monitoring_secret_arn" {
-  description = "ARN of the monitoring secret in Secrets Manager"
-  type        = string
-}
-
-variable "twilio_secret_arn" {
-  description = "ARN of the Twilio secret in Secrets Manager"
-  type        = string
-}
+# Note: Secrets are stored in AWS Systems Manager Parameter Store
+# Parameters follow the pattern: /backend-booking/{environment}/{service}/{parameter}
+# No need to pass ARNs as they are constructed within the module
 
 # ECS Service Variables
 variable "desired_count" {

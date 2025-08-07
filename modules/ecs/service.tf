@@ -75,7 +75,7 @@ resource "aws_ecs_service" "app" {
 
   # Dependencies
   depends_on = [
-    aws_iam_role_policy.ecs_task_execution_secrets,
+    aws_iam_role_policy.ecs_task_execution_ssm,
     aws_iam_role_policy.ecs_task_s3
   ]
 

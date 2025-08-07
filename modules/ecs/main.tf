@@ -78,9 +78,9 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Additional policy for Secrets Manager and CloudWatch
-resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
-  name = "${var.app_name}-${var.environment}-ecs-secrets-policy"
+# Additional policy for Parameter Store and CloudWatch
+resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
+  name = "${var.app_name}-${var.environment}-ecs-ssm-policy"
   role = aws_iam_role.ecs_task_execution.id
 
   policy = jsonencode({
@@ -89,10 +89,26 @@ resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:GetSecretValue",
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = [
+          "arn:aws:ssm:${var.aws_region}:*:parameter/backend-booking/${var.environment}/*",
+          "arn:aws:ssm:${var.aws_region}:*:parameter/backend-booking/common/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "kms:Decrypt"
         ]
-        Resource = var.secrets_arns
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "ssm.${var.aws_region}.amazonaws.com"
+          }
+        }
       },
       {
         Effect = "Allow"

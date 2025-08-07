@@ -1,3 +1,6 @@
+# Data source for current AWS account
+data "aws_caller_identity" "current" {}
+
 # Task Definition for Django Application
 resource "aws_ecs_task_definition" "app" {
   family                   = "${var.app_name}-${var.environment}"
@@ -43,34 +46,86 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "REDIS_URL"
           value = var.redis_url
+        },
+        {
+          name  = "SEED_SALON_NAME"
+          value = var.seed_data != null ? var.seed_data.salon.name : ""
+        },
+        {
+          name  = "SEED_SALON_STREET"
+          value = var.seed_data != null ? var.seed_data.salon.street : ""
+        },
+        {
+          name  = "SEED_SALON_CITY"
+          value = var.seed_data != null ? var.seed_data.salon.city : ""
+        },
+        {
+          name  = "SEED_SALON_POSTAL_CODE"
+          value = var.seed_data != null ? var.seed_data.salon.postal_code : ""
+        },
+        {
+          name  = "SEED_OWNER_EMAIL"
+          value = var.seed_data != null ? var.seed_data.owner.email : ""
+        },
+        {
+          name  = "SEED_OWNER_FIRST_NAME"
+          value = var.seed_data != null ? var.seed_data.owner.first_name : ""
+        },
+        {
+          name  = "SEED_OWNER_LAST_NAME"
+          value = var.seed_data != null ? var.seed_data.owner.last_name : ""
+        },
+        {
+          name  = "SEED_OWNER_FULL_NAME"
+          value = var.seed_data != null ? var.seed_data.owner.full_name : ""
         }
       ]
 
-      # Secrets from AWS Secrets Manager
+      # Secrets from AWS Systems Manager Parameter Store
       secrets = [
         {
           name      = "DJANGO_SECRET_KEY"
-          valueFrom = "${var.django_secret_arn}:secret_key::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/app/django-secret-key"
         },
         {
-          name      = "DATABASE_URL"
-          valueFrom = "${var.database_secret_arn}:connection_string::"
+          name      = "DATABASE_PASSWORD"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/password"
+        },
+        {
+          name      = "DATABASE_HOST"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/host"
+        },
+        {
+          name      = "DATABASE_NAME"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/name"
+        },
+        {
+          name      = "DATABASE_USER"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/username"
         },
         {
           name      = "SENTRY_DSN"
-          valueFrom = "${var.monitoring_secret_arn}:sentry_dsn::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/common/sentry-dsn"
         },
         {
           name      = "NEW_RELIC_LICENSE_KEY"
-          valueFrom = "${var.monitoring_secret_arn}:new_relic_key::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/common/new-relic-license-key"
         },
         {
           name      = "TWILIO_ACCOUNT_SID"
-          valueFrom = "${var.twilio_secret_arn}:account_sid::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/third-party/twilio-account-sid"
         },
         {
           name      = "TWILIO_AUTH_TOKEN"
-          valueFrom = "${var.twilio_secret_arn}:auth_token::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/third-party/twilio-auth-token"
+        },
+        {
+          name      = "TWILIO_PHONE_NUMBER"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/third-party/twilio-phone-number"
+        },
+        {
+          name      = "SEED_OWNER_DEFAULT_PASSWORD"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/seed-data/owner-default-password"
         }
       ]
 
@@ -163,11 +218,11 @@ resource "aws_ecs_task_definition" "app" {
       secrets = [
         {
           name      = "DATABASES_USER"
-          valueFrom = "${var.database_secret_arn}:username::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/username"
         },
         {
           name      = "DATABASES_PASSWORD"
-          valueFrom = "${var.database_secret_arn}:password::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/password"
         }
       ]
 
@@ -247,11 +302,23 @@ resource "aws_ecs_task_definition" "migrate" {
       secrets = [
         {
           name      = "DJANGO_SECRET_KEY"
-          valueFrom = "${var.django_secret_arn}:secret_key::"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/app/django-secret-key"
         },
         {
-          name      = "DATABASE_URL"
-          valueFrom = "${var.database_secret_arn}:connection_string::"
+          name      = "DATABASE_PASSWORD"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/password"
+        },
+        {
+          name      = "DATABASE_HOST"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/host"
+        },
+        {
+          name      = "DATABASE_NAME"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/name"
+        },
+        {
+          name      = "DATABASE_USER"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/username"
         }
       ]
 
