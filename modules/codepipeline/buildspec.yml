@@ -1,0 +1,58 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$ECR_REPOSITORY_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo Build started on `date`
+      - echo Building the Docker image with tags $IMAGE_TAG and latest...
+
+  build:
+    commands:
+      # Build the Docker image
+      - echo Building Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      
+      # Run tests (optional - uncomment if you have tests)
+      # - echo Running tests...
+      # - docker run --rm $REPOSITORY_URI:latest python manage.py test
+      
+      # Security scan (optional but recommended)
+      - echo Running security scan...
+      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL --exit-code 0 $REPOSITORY_URI:latest || true
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images to ECR...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      
+      # Create imagedefinitions.json for ECS deployment
+      - echo Writing image definitions file...
+      - printf '[{"name":"%s","imageUri":"%s"}]' $APP_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+      
+      # Update Parameter Store with new image tag (optional)
+      - |
+        if [ "$ENVIRONMENT" = "prod" ]; then
+          echo Updating Parameter Store with new image tag...
+          aws ssm put-parameter --name "/backend-booking/$ENVIRONMENT/deployment/image-tag" --value "$IMAGE_TAG" --overwrite || true
+          aws ssm put-parameter --name "/backend-booking/$ENVIRONMENT/deployment/commit-hash" --value "$CODEBUILD_RESOLVED_SOURCE_VERSION" --overwrite || true
+          aws ssm put-parameter --name "/backend-booking/$ENVIRONMENT/deployment/build-time" --value "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --overwrite || true
+        fi
+
+artifacts:
+  files:
+    - imagedefinitions.json
+  name: BuildArtifacts
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
+    - '/var/lib/docker/**/*'
