@@ -9,13 +9,28 @@ output "vpc_cidr" {
 }
 
 output "public_subnet_id" {
-  description = "The ID of the public subnet"
+  description = "The ID of the first public subnet"
   value       = aws_subnet.public.id
 }
 
+output "public_subnet_2_id" {
+  description = "The ID of the second public subnet"
+  value       = aws_subnet.public_2.id
+}
+
+output "public_subnet_ids" {
+  description = "List of all public subnet IDs"
+  value       = [aws_subnet.public.id, aws_subnet.public_2.id]
+}
+
 output "public_subnet_cidr" {
-  description = "The CIDR block of the public subnet"
+  description = "The CIDR block of the first public subnet"
   value       = aws_subnet.public.cidr_block
+}
+
+output "public_subnet_2_cidr" {
+  description = "The CIDR block of the second public subnet"
+  value       = aws_subnet.public_2.cidr_block
 }
 
 output "private_subnet_id" {
@@ -53,8 +68,13 @@ output "private_route_table_id" {
   value       = aws_route_table.private.id
 }
 
+output "availability_zones" {
+  description = "The availability zones used for the subnets"
+  value       = [data.aws_availability_zones.available.names[0], data.aws_availability_zones.available.names[1]]
+}
+
 output "availability_zone" {
-  description = "The availability zone used for the subnets"
+  description = "The first availability zone (for backward compatibility)"
   value       = data.aws_availability_zones.available.names[0]
 }
 

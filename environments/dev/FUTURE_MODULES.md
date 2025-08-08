@@ -12,6 +12,8 @@ This document outlines the modules that will be created to complete the ECS infr
 - VPC and Networking
 - Security Groups
 - Parameter Store configuration
+- Application Load Balancer (ALB) with target group
+- CodePipeline CI/CD module (ready for GitHub integration)
 
 ## Future Modules
 
@@ -87,34 +89,19 @@ module "app_service" {
 }
 ```
 
-### 3. ALB Module (`modules/alb`)
+### 3. ~~ALB Module~~ ✅ **COMPLETED**
 
-**When to implement:** Can be done anytime (doesn't depend on ECS tasks)
+The Application Load Balancer module has been implemented and integrated into the dev environment.
 
-**Purpose:** Public-facing load balancer for the application
+**What's configured:**
+- Internet-facing ALB in public subnet
+- Target group with health checks (path: `/health/`)
+- HTTP listener on port 80
+- CloudWatch alarms for monitoring
+- Ready for SSL/TLS when certificate is available
 
-```hcl
-module "alb" {
-  source = "../../modules/alb"
-  
-  name               = "${var.app_name}-${var.environment}"
-  vpc_id            = module.networking.vpc_id
-  subnets           = [module.networking.public_subnet_id]
-  security_group_id = aws_security_group.alb.id
-  
-  # Target Group
-  target_group_port     = 80
-  target_group_protocol = "HTTP"
-  health_check_path     = "/health/"
-  
-  # Listener
-  listener_port     = 80
-  listener_protocol = "HTTP"
-  
-  # SSL (future)
-  # certificate_arn = var.certificate_arn
-}
-```
+**Access the ALB:**
+After deployment, the ALB will be accessible at the DNS name output by Terraform.
 
 ### 4. Worker Task Module (`modules/ecs-worker`)
 

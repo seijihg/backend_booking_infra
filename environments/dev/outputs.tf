@@ -22,8 +22,13 @@ output "vpc_cidr" {
   value       = module.networking.vpc_cidr
 }
 
+output "public_subnet_ids" {
+  description = "Public subnet IDs for ALB (2 AZs)"
+  value       = module.networking.public_subnet_ids
+}
+
 output "public_subnet_id" {
-  description = "Public subnet ID for ALB and NAT Gateway"
+  description = "First public subnet ID (for backward compatibility)"
   value       = module.networking.public_subnet_id
 }
 
@@ -117,10 +122,35 @@ output "ecs_log_group_name" {
 # output "ecs_service_name" - Will be added when service module is created
 # output "ecs_task_definition_family" - Will be added when task definition is created
 
-# Target Group Output
+# ALB Outputs
+output "alb_dns_name" {
+  description = "DNS name of the Application Load Balancer"
+  value       = module.alb.alb_dns_name
+}
+
+output "alb_arn" {
+  description = "ARN of the Application Load Balancer"
+  value       = module.alb.alb_arn
+}
+
+output "alb_zone_id" {
+  description = "Zone ID of the ALB (for Route53 alias records)"
+  value       = module.alb.alb_zone_id
+}
+
+output "alb_url" {
+  description = "URL to access the application"
+  value       = module.alb.alb_url
+}
+
 output "target_group_arn" {
   description = "ARN of the target group for ALB"
-  value       = aws_lb_target_group.app.arn
+  value       = module.alb.target_group_arn
+}
+
+output "target_group_name" {
+  description = "Name of the target group"
+  value       = module.alb.target_group_name
 }
 
 # Parameter Store Path Outputs

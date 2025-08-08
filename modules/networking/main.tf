@@ -60,7 +60,7 @@ resource "aws_eip" "nat" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# Public Subnet
+# Public Subnet 1 (AZ 1)
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr
@@ -70,9 +70,28 @@ resource "aws_subnet" "public" {
   tags = merge(
     var.tags,
     {
-      Name        = "${var.project_name}-${var.environment}-public-subnet"
+      Name        = "${var.project_name}-${var.environment}-public-subnet-1"
       Environment = var.environment
       Type        = "public"
+      AZ          = "1"
+    }
+  )
+}
+
+# Public Subnet 2 (AZ 2) - Required for ALB
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_2_cidr
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  map_public_ip_on_launch = true
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${var.project_name}-${var.environment}-public-subnet-2"
+      Environment = var.environment
+      Type        = "public"
+      AZ          = "2"
     }
   )
 }
@@ -98,7 +117,7 @@ resource "aws_subnet" "private" {
 resource "aws_nat_gateway" "main" {
   count         = var.enable_nat_gateway ? 1 : 0
   allocation_id = aws_eip.nat[0].id
-  subnet_id     = aws_subnet.public.id
+  subnet_id     = aws_subnet.public.id  # NAT Gateway in first public subnet
 
   tags = merge(
     var.tags,
@@ -132,9 +151,15 @@ resource "aws_route" "public_internet" {
   gateway_id             = aws_internet_gateway.main.id
 }
 
-# Associate public subnet with public route table
+# Associate public subnet 1 with public route table
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Associate public subnet 2 with public route table
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
 }
 
