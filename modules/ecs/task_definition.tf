@@ -9,15 +9,12 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = var.task_cpu
   memory                   = var.task_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn           = aws_iam_role.ecs_task.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
 
   container_definitions = jsonencode([
     {
       name  = var.app_name
       image = "${var.ecr_repository_url}:${var.image_tag}"
-
-      cpu    = var.task_cpu
-      memory = var.task_memory
 
       essential = true
 
@@ -102,14 +99,6 @@ resource "aws_ecs_task_definition" "app" {
         {
           name      = "DATABASE_USER"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/username"
-        },
-        {
-          name      = "SENTRY_DSN"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/common/sentry-dsn"
-        },
-        {
-          name      = "NEW_RELIC_LICENSE_KEY"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/common/new-relic-license-key"
         },
         {
           name      = "TWILIO_ACCOUNT_SID"
@@ -267,76 +256,6 @@ resource "aws_ecs_task_definition" "app" {
     var.tags,
     {
       Name        = "${var.app_name}-${var.environment}-task-definition"
-      Environment = var.environment
-    }
-  )
-}
-
-# Task Definition for Database Migrations (One-off tasks)
-resource "aws_ecs_task_definition" "migrate" {
-  family                   = "${var.app_name}-${var.environment}-migrate"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn           = aws_iam_role.ecs_task.arn
-
-  container_definitions = jsonencode([
-    {
-      name  = "${var.app_name}-migrate"
-      image = "${var.ecr_repository_url}:${var.image_tag}"
-
-      # Override command to run migrations
-      command = ["python", "manage.py", "migrate", "--noinput"]
-
-      essential = true
-
-      environment = [
-        {
-          name  = "ENVIRONMENT"
-          value = var.environment
-        }
-      ]
-
-      secrets = [
-        {
-          name      = "DJANGO_SECRET_KEY"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/app/django-secret-key"
-        },
-        {
-          name      = "DATABASE_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/password"
-        },
-        {
-          name      = "DATABASE_HOST"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/host"
-        },
-        {
-          name      = "DATABASE_NAME"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/name"
-        },
-        {
-          name      = "DATABASE_USER"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/username"
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.ecs.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "migrate"
-        }
-      }
-    }
-  ])
-
-  tags = merge(
-    var.tags,
-    {
-      Name        = "${var.app_name}-${var.environment}-migrate-task"
       Environment = var.environment
     }
   )

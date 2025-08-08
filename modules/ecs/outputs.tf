@@ -46,11 +46,6 @@ output "task_definition_revision" {
   value       = aws_ecs_task_definition.app.revision
 }
 
-output "migrate_task_definition_arn" {
-  description = "ARN of the migration task definition"
-  value       = aws_ecs_task_definition.migrate.arn
-}
-
 # IAM Role Outputs
 output "task_execution_role_arn" {
   description = "ARN of the task execution role"
@@ -65,7 +60,7 @@ output "task_role_arn" {
 # Security Group Outputs
 output "ecs_security_group_id" {
   description = "ID of the ECS tasks security group"
-  value       = aws_security_group.ecs_tasks.id
+  value       = local.ecs_tasks_sg_id
 }
 
 # CloudWatch Log Group Outputs

@@ -1,0 +1,35 @@
+# Example terraform.tfvars file for development environment
+# Copy this file to terraform.tfvars and customize as needed
+# IMPORTANT: Add terraform.tfvars to .gitignore to avoid committing sensitive data
+
+# Seed Data Configuration (non-sensitive data)
+# You can override the entire object or use the defaults from variables.tf
+# seed_data = {
+#   salon = {
+#     name        = "My Custom Salon"
+#     street      = "123 Main Street"
+#     city        = "London"
+#     postal_code = "SW1A 1AA"
+#   }
+#   owner = {
+#     email      = "owner@example.com"
+#     first_name = "John"
+#     last_name  = "Doe"
+#     full_name  = "John Doe"
+#   }
+# }
+
+# Seed Owner Password - THIS IS THE ONLY REQUIRED OVERRIDE!
+# Just override the password, all other seed data will use defaults
+seed_owner_password = "your-secure-password-here"  # CHANGE THIS!
+
+# Or override individual top-level variables as needed:
+# ecs_desired_count = 2
+# ecs_task_cpu = "512"
+# ecs_task_memory = "1024"
+
+# Sensitive variables (keep these secure!)
+# django_secret_key = "your-django-secret-key"
+# database_password = "your-database-password"
+# twilio_auth_token = "your-twilio-auth-token"
+# twilio_account_sid = "your-twilio-account-sid"

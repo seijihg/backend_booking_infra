@@ -149,6 +149,8 @@ resource "aws_ssm_parameter" "s3_bucket_name" {
 }
 
 resource "aws_ssm_parameter" "cloudfront_distribution_id" {
+  count = var.cloudfront_distribution_id != "" ? 1 : 0  # Only create if value is provided
+  
   name  = "/backend-booking/${var.environment}/aws/cloudfront-distribution-id"
   type  = "String"
   value = var.cloudfront_distribution_id
@@ -162,6 +164,8 @@ resource "aws_ssm_parameter" "cloudfront_distribution_id" {
 
 # Third-party Service Parameters
 resource "aws_ssm_parameter" "twilio_account_sid" {
+  count = var.twilio_account_sid != "" ? 1 : 0  # Only create if value is provided
+  
   name  = "/backend-booking/${var.environment}/third-party/twilio-account-sid"
   type  = "String"
   value = var.twilio_account_sid
@@ -174,6 +178,8 @@ resource "aws_ssm_parameter" "twilio_account_sid" {
 }
 
 resource "aws_ssm_parameter" "twilio_auth_token" {
+  count = var.twilio_auth_token != "" ? 1 : 0  # Only create if value is provided
+  
   name  = "/backend-booking/${var.environment}/third-party/twilio-auth-token"
   type  = "SecureString"
   value = var.twilio_auth_token
@@ -201,40 +207,11 @@ resource "aws_ssm_parameter" "twilio_phone_number" {
 resource "aws_ssm_parameter" "seed_owner_default_password" {
   name  = "/backend-booking/${var.environment}/seed-data/owner-default-password"
   type  = "SecureString"
-  value = var.seed_owner_password
+  value = var.seed_owner_password != "" ? var.seed_owner_password : "changeme123"  # Use default if empty
 
   tags = {
     Name        = "Seed Owner Default Password"
     Environment = var.environment
     Service     = "seed-data"
-  }
-}
-
-# Common Parameters (shared across environments)
-resource "aws_ssm_parameter" "sentry_dsn" {
-  count = var.environment == "dev" ? 1 : 0 # Only create in dev, prod will reference the same
-
-  name  = "/backend-booking/common/sentry-dsn"
-  type  = "String"
-  value = var.sentry_dsn
-
-  tags = {
-    Name        = "Sentry DSN"
-    Environment = "common"
-    Service     = "monitoring"
-  }
-}
-
-resource "aws_ssm_parameter" "new_relic_license_key" {
-  count = var.environment == "dev" ? 1 : 0 # Only create in dev, prod will reference the same
-
-  name  = "/backend-booking/common/new-relic-license-key"
-  type  = "SecureString"
-  value = var.new_relic_license_key
-
-  tags = {
-    Name        = "New Relic License Key"
-    Environment = "common"
-    Service     = "monitoring"
   }
 }

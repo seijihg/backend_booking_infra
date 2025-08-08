@@ -182,8 +182,23 @@ resource "aws_iam_role_policy" "ecs_task_s3" {
   })
 }
 
+# Try to find existing security group
+data "aws_security_groups" "existing_ecs_sg" {
+  filter {
+    name   = "group-name"
+    values = ["${var.app_name}-${var.environment}-ecs-tasks-sg"]
+  }
+  
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id]
+  }
+}
+
 # Security Group for ECS Tasks
 resource "aws_security_group" "ecs_tasks" {
+  count = length(data.aws_security_groups.existing_ecs_sg.ids) == 0 ? 1 : 0  # Only create if doesn't exist
+  
   name        = "${var.app_name}-${var.environment}-ecs-tasks-sg"
   description = "Security group for ECS tasks"
   vpc_id      = var.vpc_id
@@ -211,4 +226,9 @@ resource "aws_security_group" "ecs_tasks" {
       Environment = var.environment
     }
   )
+}
+
+# Use either the existing or newly created security group
+locals {
+  ecs_tasks_sg_id = length(data.aws_security_groups.existing_ecs_sg.ids) > 0 ? data.aws_security_groups.existing_ecs_sg.ids[0] : aws_security_group.ecs_tasks[0].id
 }

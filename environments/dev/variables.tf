@@ -107,19 +107,6 @@ variable "database_password" {
   default     = ""
 }
 
-variable "sentry_dsn" {
-  description = "Sentry DSN for error monitoring"
-  type        = string
-  default     = ""
-}
-
-variable "new_relic_license_key" {
-  description = "New Relic license key"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "twilio_account_sid" {
   description = "Twilio Account SID"
   type        = string

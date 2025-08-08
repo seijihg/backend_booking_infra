@@ -10,7 +10,7 @@ The ECS module has been integrated into the dev environment with the following c
 - ECR Repository for Docker images with lifecycle policy
 - ECS Cluster with Fargate support
 - ECS Service with auto-scaling
-- Task definitions for app and migrations
+- Task definition for the application
 
 **Security & IAM:**
 - IAM roles for task execution and application
@@ -54,17 +54,6 @@ aws ecs update-service \
   --cluster $(terraform output -raw ecs_cluster_name) \
   --service $(terraform output -raw ecs_service_name) \
   --force-new-deployment \
-  --region eu-west-2
-```
-
-### 4. Run Database Migrations
-```bash
-# Run migration task
-aws ecs run-task \
-  --cluster $(terraform output -raw ecs_cluster_name) \
-  --task-definition $(terraform output -raw ecs_task_definition_family)-migrate \
-  --launch-type FARGATE \
-  --network-configuration "awsvpcConfiguration={subnets=[$(terraform output -raw private_subnet_id)],securityGroups=[$(terraform output -raw ecs_tasks_security_group_id)]}" \
   --region eu-west-2
 ```
 
