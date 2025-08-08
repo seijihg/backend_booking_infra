@@ -80,31 +80,42 @@ output "ecr_repository_arn" {
   value       = aws_ecr_repository.app.arn
 }
 
-# ECS Outputs
+# ECS Cluster Outputs
 output "ecs_cluster_id" {
   description = "ID of the ECS cluster"
-  value       = module.ecs.cluster_id
+  value       = module.ecs_cluster.cluster_id
 }
 
 output "ecs_cluster_name" {
   description = "Name of the ECS cluster"
-  value       = module.ecs.cluster_name
+  value       = module.ecs_cluster.cluster_name
 }
 
-output "ecs_service_name" {
-  description = "Name of the ECS service"
-  value       = module.ecs.service_name
+output "ecs_cluster_arn" {
+  description = "ARN of the ECS cluster"
+  value       = module.ecs_cluster.cluster_arn
 }
 
-output "ecs_task_definition_family" {
-  description = "Family of the ECS task definition"
-  value       = module.ecs.task_definition_family
+# IAM Role Outputs (for future task definitions)
+output "ecs_task_execution_role_arn" {
+  description = "ARN of the ECS task execution role (for pulling images and writing logs)"
+  value       = module.ecs_cluster.task_execution_role_arn
 }
 
-output "ecs_task_definition_revision" {
-  description = "Revision of the ECS task definition"
-  value       = module.ecs.task_definition_revision
+output "ecs_task_role_arn" {
+  description = "ARN of the ECS task role (for application permissions)"
+  value       = module.ecs_cluster.task_role_arn
 }
+
+# CloudWatch Log Group
+output "ecs_log_group_name" {
+  description = "Name of the CloudWatch log group for ECS"
+  value       = module.ecs_cluster.log_group_name
+}
+
+# Note: Service and task definition outputs will be added when those resources are created
+# output "ecs_service_name" - Will be added when service module is created
+# output "ecs_task_definition_family" - Will be added when task definition is created
 
 # Target Group Output
 output "target_group_arn" {
