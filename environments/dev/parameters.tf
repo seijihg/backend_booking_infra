@@ -215,3 +215,25 @@ resource "aws_ssm_parameter" "seed_owner_default_password" {
     Service     = "seed-data"
   }
 }
+
+# CI/CD Parameters
+# Note: GitHub token should be stored manually using the setup-github-token.sh script
+# This creates a placeholder parameter that documents where the token should be stored
+resource "aws_ssm_parameter" "github_token_placeholder" {
+  count = 0  # Set to 1 only if you want to create a placeholder
+  
+  name  = "/backend-booking/common/github-token"
+  type  = "SecureString"
+  value = "PLACEHOLDER - Use scripts/setup-github-token.sh to set the actual token"
+
+  tags = {
+    Name        = "GitHub Token for CodePipeline"
+    Environment = "common"
+    Service     = "ci-cd"
+    Note        = "Use setup-github-token.sh script to set actual value"
+  }
+  
+  lifecycle {
+    ignore_changes = [value]  # Ignore changes to the value after initial creation
+  }
+}
