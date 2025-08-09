@@ -133,8 +133,55 @@ module "ecs_cluster" {
   }
 }
 
-# TODO: Future modules to be added when ready:
-# 1. ECS Task Definitions module (when ECR images are built)
-# 2. ECS Services module (when ALB is fully configured)
-# 3. Auto-scaling policies module
-# 4. Worker tasks module (for Dramatiq background jobs)
+# ECS Task Definition Module - Defines how the Django container runs
+module "app_task_definition" {
+  source = "../../modules/ecs-task-definition"
+
+  app_name    = var.app_name
+  environment = var.environment
+  aws_region  = var.aws_region
+  
+  # Container configuration
+  container_name  = "${var.app_name}-app"
+  container_image = "${aws_ecr_repository.app.repository_url}:latest"  # Using the latest image you pushed
+  container_port  = 8000
+  
+  # Task resources (dev environment - minimal)
+  task_cpu    = var.ecs_task_cpu
+  task_memory = var.ecs_task_memory
+  
+  # IAM Roles from ECS cluster
+  execution_role_arn = module.ecs_cluster.task_execution_role_arn
+  task_role_arn     = module.ecs_cluster.task_role_arn
+  
+  # CloudWatch Logs
+  log_group_name = module.ecs_cluster.log_group_name
+  
+  # Django configuration
+  django_settings_module = "config.settings.production"  # Adjust based on your Django project
+  allowed_hosts         = var.allowed_hosts
+  debug_mode           = var.environment == "dev" ? true : false
+  
+  # Optional services (disabled for now)
+  enable_twilio              = true  # Enable when Twilio is configured
+  s3_bucket_name            = ""     # Will add when S3 module is ready
+  cloudfront_distribution_id = ""     # Will add when CloudFront is ready
+  
+  # Additional environment variables if needed
+  environment_variables = {
+    "CORS_ALLOWED_ORIGINS" = "*"  # Adjust for production
+    "USE_X_FORWARDED_HOST" = "True"
+    "SECURE_PROXY_SSL_HEADER" = "HTTP_X_FORWARDED_PROTO,https"
+  }
+  
+  tags = {
+    Environment = var.environment
+    Project     = var.app_name
+    ManagedBy   = "Terraform"
+  }
+}
+
+# TODO: Next steps:
+# 1. ECS Service module (to manage running tasks)
+# 2. Auto-scaling policies
+# 3. Worker tasks module (for Dramatiq background jobs)

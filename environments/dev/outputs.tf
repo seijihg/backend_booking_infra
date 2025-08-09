@@ -118,9 +118,24 @@ output "ecs_log_group_name" {
   value       = module.ecs_cluster.log_group_name
 }
 
-# Note: Service and task definition outputs will be added when those resources are created
+# ECS Task Definition Outputs
+output "task_definition_arn" {
+  description = "ARN of the ECS task definition"
+  value       = module.app_task_definition.task_definition_arn
+}
+
+output "task_definition_family" {
+  description = "Family of the ECS task definition"
+  value       = module.app_task_definition.task_definition_family
+}
+
+output "task_definition_revision" {
+  description = "Revision of the ECS task definition"
+  value       = module.app_task_definition.task_definition_revision
+}
+
+# Note: Service outputs will be added when service module is created
 # output "ecs_service_name" - Will be added when service module is created
-# output "ecs_task_definition_family" - Will be added when task definition is created
 
 # ALB Outputs
 output "alb_dns_name" {
