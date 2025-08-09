@@ -38,9 +38,15 @@ variable "public_subnet_2_cidr" {
 }
 
 variable "private_subnet_cidr" {
-  description = "CIDR block for the private subnet"
+  description = "CIDR block for the first private subnet (AZ 1)"
   type        = string
   default     = "10.0.10.0/24"
+}
+
+variable "private_subnet_2_cidr" {
+  description = "CIDR block for the second private subnet (AZ 2) - required for RDS"
+  type        = string
+  default     = "10.0.11.0/24"
 }
 
 variable "enable_nat_gateway" {
