@@ -43,7 +43,7 @@ variable "db_password" {
   description = "Master password for the database (will be stored in Parameter Store)"
   type        = string
   sensitive   = true
-  default     = ""  # If empty, will generate random password
+  default     = "" # If empty, will generate random password
 }
 
 variable "db_port" {
@@ -62,7 +62,7 @@ variable "instance_identifier" {
 variable "instance_class" {
   description = "Instance class for RDS"
   type        = string
-  default     = "db.t3.micro"  # Free tier eligible
+  default     = "db.t3.micro" # Free tier eligible
 }
 
 variable "allocated_storage" {
@@ -74,7 +74,7 @@ variable "allocated_storage" {
 variable "max_allocated_storage" {
   description = "Maximum storage for autoscaling (0 to disable)"
   type        = number
-  default     = 0  # Disabled for dev
+  default     = 0 # Disabled for dev
 }
 
 variable "storage_type" {
@@ -99,20 +99,20 @@ variable "kms_key_id" {
 variable "engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "15.4"  # Latest stable version
+  default     = "17.5" # Latest stable version
 }
 
 variable "family" {
   description = "DB parameter group family"
   type        = string
-  default     = "postgres15"
+  default     = "postgres17"
 }
 
 # High Availability
 variable "multi_az" {
   description = "Enable Multi-AZ for high availability"
   type        = bool
-  default     = false  # Disabled for dev to save costs
+  default     = false # Disabled for dev to save costs
 }
 
 variable "availability_zone" {
@@ -143,7 +143,7 @@ variable "maintenance_window" {
 variable "skip_final_snapshot" {
   description = "Skip final snapshot when destroying"
   type        = bool
-  default     = true  # For dev environments
+  default     = true # For dev environments
 }
 
 variable "final_snapshot_identifier" {
@@ -168,7 +168,7 @@ variable "enabled_cloudwatch_logs_exports" {
 variable "monitoring_interval" {
   description = "Enhanced monitoring interval (0 to disable)"
   type        = number
-  default     = 0  # Disabled for dev
+  default     = 0 # Disabled for dev
 }
 
 variable "monitoring_role_arn" {
@@ -180,7 +180,7 @@ variable "monitoring_role_arn" {
 variable "performance_insights_enabled" {
   description = "Enable Performance Insights"
   type        = bool
-  default     = false  # Disabled for dev
+  default     = false # Disabled for dev
 }
 
 variable "performance_insights_retention_period" {
@@ -209,7 +209,7 @@ variable "db_parameters" {
   default = {
     shared_preload_libraries = "pg_stat_statements"
     log_statement            = "all"
-    log_duration            = "on"
+    log_duration             = "on"
   }
 }
 
@@ -217,7 +217,7 @@ variable "db_parameters" {
 variable "deletion_protection" {
   description = "Enable deletion protection"
   type        = bool
-  default     = false  # Disabled for dev
+  default     = false # Disabled for dev
 }
 
 # Auto Minor Version Upgrade
@@ -231,7 +231,7 @@ variable "auto_minor_version_upgrade" {
 variable "publicly_accessible" {
   description = "Make RDS instance publicly accessible"
   type        = bool
-  default     = false  # Should be in private subnet
+  default     = false # Should be in private subnet
 }
 
 # IAM Database Authentication

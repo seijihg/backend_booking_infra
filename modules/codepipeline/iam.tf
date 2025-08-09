@@ -35,7 +35,7 @@ resource "aws_iam_role_policy" "codepipeline" {
           "ssm:GetParameters"
         ]
         Resource = [
-          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter${var.github_token_parameter_name}"
+          "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter${var.github_token_parameter_name}"
         ]
       },
       {
@@ -91,7 +91,7 @@ resource "aws_iam_role_policy" "codepipeline" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codepipeline/*"
+        Resource = "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codepipeline/*"
       }
     ]
   })
@@ -169,7 +169,7 @@ resource "aws_iam_role_policy" "codebuild" {
           "ssm:GetParameters",
           "ssm:GetParametersByPath"
         ]
-        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/*"
+        Resource = "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/*"
       },
       {
         Effect = "Allow"
@@ -179,7 +179,7 @@ resource "aws_iam_role_policy" "codebuild" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "ssm.${data.aws_region.current.name}.amazonaws.com"
+            "kms:ViaService" = "ssm.${data.aws_region.current.id}.amazonaws.com"
           }
         }
       }
@@ -215,7 +215,7 @@ resource "aws_iam_role_policy" "codebuild_vpc" {
         Action = [
           "ec2:CreateNetworkInterfacePermission"
         ]
-        Resource = "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:network-interface/*"
+        Resource = "arn:aws:ec2:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:network-interface/*"
         Condition = {
           StringEquals = {
             "ec2:Subnet" = var.private_subnet_ids

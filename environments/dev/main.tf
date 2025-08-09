@@ -291,8 +291,9 @@ module "rds" {
   security_group_ids = [aws_security_group.ecs_tasks.id]
   
   # Database configuration
-  db_name     = "${var.app_name}_${var.environment}"
-  db_username = "${var.app_name}_${var.environment}"
+  # RDS requires alphanumeric only (no hyphens or underscores in db_name)
+  db_name     = "${replace(var.app_name, "-", "")}${var.environment}"  # Results in "backendbookingdev"
+  db_username = "${replace(var.app_name, "-", "_")}_${var.environment}"  # Username can have underscores
   # Password will be auto-generated and stored in Parameter Store
   
   # Dev environment settings (cost-optimized)

@@ -197,7 +197,7 @@ resource "aws_cloudwatch_dashboard" "service" {
           ]
           period = 300
           stat   = "Average"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.id
           title  = "ECS Service Utilization"
         }
       },
@@ -211,7 +211,7 @@ resource "aws_cloudwatch_dashboard" "service" {
           ]
           period = 300
           stat   = "Average"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.id
           title  = "Task Count"
         }
       }

@@ -121,7 +121,7 @@ resource "aws_cloudwatch_dashboard" "pipeline" {
           ]
           period = 300
           stat   = "Sum"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.id
           title  = "Pipeline Execution Metrics"
           view   = "timeSeries"
         }
@@ -135,7 +135,7 @@ resource "aws_cloudwatch_dashboard" "pipeline" {
           ]
           period = 300
           stat   = "Average"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.id
           title  = "Build Duration"
           view   = "timeSeries"
           yAxis = {

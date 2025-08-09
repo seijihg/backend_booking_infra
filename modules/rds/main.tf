@@ -78,8 +78,9 @@ resource "aws_db_parameter_group" "main" {
   dynamic "parameter" {
     for_each = var.db_parameters
     content {
-      name  = parameter.key
-      value = parameter.value
+      name         = parameter.key
+      value        = parameter.value
+      apply_method = "pending-reboot"  # Static parameters require reboot
     }
   }
 

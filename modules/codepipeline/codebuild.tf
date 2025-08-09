@@ -20,7 +20,7 @@ resource "aws_codebuild_project" "main" {
     # Environment variables for the build
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
-      value = data.aws_region.current.name
+      value = data.aws_region.current.id
     }
 
     environment_variable {
