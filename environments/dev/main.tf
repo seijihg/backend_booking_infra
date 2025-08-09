@@ -181,7 +181,104 @@ module "app_task_definition" {
   }
 }
 
+# VPC Endpoints Module - Private connectivity to AWS services (no NAT Gateway needed)
+module "vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  vpc_id     = module.networking.vpc_id
+  vpc_cidr   = module.networking.vpc_cidr
+  app_name   = var.app_name
+  environment = var.environment
+  aws_region  = var.aws_region
+  
+  # Subnets and route tables for endpoints
+  private_subnet_ids      = [module.networking.private_subnet_id]
+  private_route_table_ids = [module.networking.private_route_table_id]
+  
+  # Security groups that need access to endpoints
+  security_group_ids = [
+    aws_security_group.ecs_tasks.id
+  ]
+  
+  # Enable all required endpoints for ECS
+  enable_ssm_endpoints    = true  # For Parameter Store
+  enable_ecr_endpoints    = true  # For Docker images
+  enable_s3_endpoint      = true  # For ECR layers (free!)
+  enable_logs_endpoint    = true  # For CloudWatch logs
+  
+  tags = {
+    Environment = var.environment
+    Project     = var.app_name
+    ManagedBy   = "Terraform"
+    Purpose     = "Private AWS service access"
+  }
+}
+
+# ECS Service Module - Manages running tasks with auto-scaling and load balancer integration
+module "app_service" {
+  source = "../../modules/ecs-service"
+
+  app_name    = var.app_name
+  environment = var.environment
+  
+  # Cluster and Task Definition
+  cluster_id           = module.ecs_cluster.cluster_id
+  task_definition_arn = module.app_task_definition.task_definition_arn
+  
+  # Service Configuration
+  service_name     = "${var.app_name}-${var.environment}-app"
+  desired_count    = var.environment == "dev" ? 1 : 2
+  launch_type      = "FARGATE"
+  platform_version = "LATEST"
+  
+  # Network Configuration - Back to private subnets with VPC endpoints
+  vpc_id             = module.networking.vpc_id
+  subnet_ids         = [module.networking.private_subnet_id]  # Private subnet (secure)
+  security_group_ids = [aws_security_group.ecs_tasks.id]
+  assign_public_ip   = false  # No public IP needed with VPC endpoints
+  
+  # Load Balancer Integration
+  enable_load_balancer = true
+  target_group_arn    = module.alb.target_group_arn
+  container_name      = module.app_task_definition.container_name
+  container_port      = module.app_task_definition.container_port
+  
+  # Auto-scaling Configuration (minimal for dev)
+  enable_autoscaling = var.environment == "dev" ? false : true
+  min_capacity      = var.environment == "dev" ? 1 : 2
+  max_capacity      = var.environment == "dev" ? 2 : 10
+  
+  # CPU and Memory thresholds
+  cpu_scale_up_threshold      = 70
+  cpu_scale_down_threshold    = 30
+  memory_scale_up_threshold   = 70
+  memory_scale_down_threshold = 30
+  
+  # Deployment Configuration
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = var.environment == "dev" ? 0 : 100
+  health_check_grace_period_seconds = 60
+  
+  # Circuit Breaker - automatic rollback on failure
+  enable_deployment_circuit_breaker = true
+  enable_deployment_rollback       = true
+  
+  # Enable ECS Exec for debugging (dev only)
+  enable_execute_command = var.environment == "dev" ? true : false
+  
+  tags = {
+    Environment = var.environment
+    Project     = var.app_name
+    ManagedBy   = "Terraform"
+  }
+  
+  # Ensure VPC endpoints are created before the service
+  depends_on = [module.vpc_endpoints]
+}
+
 # TODO: Next steps:
-# 1. ECS Service module (to manage running tasks)
-# 2. Auto-scaling policies
-# 3. Worker tasks module (for Dramatiq background jobs)
+# 1. Worker tasks module (for Dramatiq background jobs)
+# 2. RDS module
+# 3. ElastiCache Redis module
+# 4. S3 module for static files
+# 5. CloudFront CDN module

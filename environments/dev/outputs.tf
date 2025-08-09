@@ -134,8 +134,21 @@ output "task_definition_revision" {
   value       = module.app_task_definition.task_definition_revision
 }
 
-# Note: Service outputs will be added when service module is created
-# output "ecs_service_name" - Will be added when service module is created
+# ECS Service Outputs
+output "ecs_service_id" {
+  description = "ARN that identifies the ECS service"
+  value       = module.app_service.service_id
+}
+
+output "ecs_service_name" {
+  description = "Name of the ECS service"
+  value       = module.app_service.service_name
+}
+
+output "ecs_service_desired_count" {
+  description = "Number of running tasks"
+  value       = module.app_service.service_desired_count
+}
 
 # ALB Outputs
 output "alb_dns_name" {
@@ -177,4 +190,21 @@ output "parameter_store_base_path" {
 output "parameter_store_common_path" {
   description = "Common path for shared Parameter Store parameters"
   value       = "/backend-booking/common"
+}
+
+# VPC Endpoints Outputs
+output "vpc_endpoints_created" {
+  description = "List of VPC endpoints created"
+  value = {
+    s3          = module.vpc_endpoints.s3_endpoint_id != null ? "✅ Created (Free!)" : "❌ Not created"
+    ssm         = module.vpc_endpoints.ssm_endpoint_id != null ? "✅ Created" : "❌ Not created"
+    ecr_api     = module.vpc_endpoints.ecr_api_endpoint_id != null ? "✅ Created" : "❌ Not created"
+    ecr_docker  = module.vpc_endpoints.ecr_dkr_endpoint_id != null ? "✅ Created" : "❌ Not created"
+    logs        = module.vpc_endpoints.logs_endpoint_id != null ? "✅ Created" : "❌ Not created"
+  }
+}
+
+output "vpc_endpoints_monthly_cost" {
+  description = "Estimated monthly cost for VPC endpoints"
+  value       = "~$30-35/month (vs $45/month for NAT Gateway)"
 }
