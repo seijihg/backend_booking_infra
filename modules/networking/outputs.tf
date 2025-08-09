@@ -34,13 +34,28 @@ output "public_subnet_2_cidr" {
 }
 
 output "private_subnet_id" {
-  description = "The ID of the private subnet"
+  description = "The ID of the first private subnet"
   value       = aws_subnet.private.id
 }
 
+output "private_subnet_2_id" {
+  description = "The ID of the second private subnet"
+  value       = aws_subnet.private_2.id
+}
+
+output "private_subnet_ids" {
+  description = "List of all private subnet IDs"
+  value       = [aws_subnet.private.id, aws_subnet.private_2.id]
+}
+
 output "private_subnet_cidr" {
-  description = "The CIDR block of the private subnet"
+  description = "The CIDR block of the first private subnet"
   value       = aws_subnet.private.cidr_block
+}
+
+output "private_subnet_2_cidr" {
+  description = "The CIDR block of the second private subnet"
+  value       = aws_subnet.private_2.cidr_block
 }
 
 output "internet_gateway_id" {

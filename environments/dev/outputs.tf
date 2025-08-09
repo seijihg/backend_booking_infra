@@ -53,10 +53,6 @@ output "ecs_tasks_security_group_id" {
   value       = aws_security_group.ecs_tasks.id
 }
 
-output "rds_security_group_id" {
-  description = "Security group ID for RDS database"
-  value       = aws_security_group.rds.id
-}
 
 output "redis_security_group_id" {
   description = "Security group ID for ElastiCache Redis"
@@ -207,4 +203,30 @@ output "vpc_endpoints_created" {
 output "vpc_endpoints_monthly_cost" {
   description = "Estimated monthly cost for VPC endpoints"
   value       = "~$30-35/month (vs $45/month for NAT Gateway)"
+}
+
+# RDS Outputs
+output "rds_endpoint" {
+  description = "RDS instance endpoint"
+  value       = module.rds.db_instance_endpoint
+}
+
+output "rds_database_name" {
+  description = "Name of the database"
+  value       = module.rds.db_name
+}
+
+output "rds_security_group_id" {
+  description = "Security group ID for RDS"
+  value       = module.rds.db_security_group_id
+}
+
+output "rds_instance_class" {
+  description = "RDS instance class"
+  value       = module.rds.db_instance_class
+}
+
+output "rds_parameter_store_paths" {
+  description = "Parameter Store paths for database credentials"
+  value       = module.rds.parameter_store_paths
 }

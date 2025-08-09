@@ -96,7 +96,7 @@ resource "aws_subnet" "public_2" {
   )
 }
 
-# Private Subnet
+# Private Subnet 1 (AZ 1)
 resource "aws_subnet" "private" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.private_subnet_cidr
@@ -106,9 +106,28 @@ resource "aws_subnet" "private" {
   tags = merge(
     var.tags,
     {
-      Name        = "${var.project_name}-${var.environment}-private-subnet"
+      Name        = "${var.project_name}-${var.environment}-private-subnet-1"
       Environment = var.environment
       Type        = "private"
+      AZ          = "1"
+    }
+  )
+}
+
+# Private Subnet 2 (AZ 2) - Required for RDS subnet group
+resource "aws_subnet" "private_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_subnet_2_cidr
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  map_public_ip_on_launch = false
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${var.project_name}-${var.environment}-private-subnet-2"
+      Environment = var.environment
+      Type        = "private"
+      AZ          = "2"
     }
   )
 }
@@ -185,9 +204,15 @@ resource "aws_route" "private_nat" {
   nat_gateway_id         = aws_nat_gateway.main[0].id
 }
 
-# Associate private subnet with private route table
+# Associate private subnet 1 with private route table
 resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private.id
+}
+
+# Associate private subnet 2 with private route table
+resource "aws_route_table_association" "private_2" {
+  subnet_id      = aws_subnet.private_2.id
   route_table_id = aws_route_table.private.id
 }
 
