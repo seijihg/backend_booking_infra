@@ -85,20 +85,8 @@ resource "aws_ecs_task_definition" "app" {
           valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/app/django-secret-key"
         },
         {
-          name      = "DATABASE_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/password"
-        },
-        {
-          name      = "DATABASE_HOST"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/host"
-        },
-        {
-          name      = "DATABASE_NAME"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/name"
-        },
-        {
-          name      = "DATABASE_USER"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/username"
+          name      = "DATABASE_URL"
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/url"
         },
         {
           name      = "TWILIO_ACCOUNT_SID"

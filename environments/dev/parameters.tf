@@ -25,116 +25,139 @@ resource "aws_ssm_parameter" "allowed_hosts" {
   }
 }
 
-resource "aws_ssm_parameter" "debug_mode" {
-  name  = "/backend-booking/${var.environment}/app/debug-mode"
-  type  = "String"
-  value = var.environment == "dev" ? "true" : "false"
+# Debug mode is not used by the application, removed parameter
+# If needed in future, can be set directly as environment variable
 
-  tags = {
-    Name        = "Debug Mode"
-    Environment = var.environment
-    Service     = "app"
-  }
+# Local variables to ensure consistency between all parameters
+locals {
+  # Database values - defined once to ensure consistency
+  db_username = "backend_booking_${var.environment}"
+  db_password = var.database_password != "" ? var.database_password : "dev-password-change-in-production"
+  db_host     = var.database_host != "" ? var.database_host : "placeholder-will-be-updated-when-rds-deployed"
+  db_name     = var.database_name
+  db_port     = "5432"
+  
+  # Redis values - defined once to ensure consistency
+  redis_host = var.redis_host != "" ? var.redis_host : "placeholder-will-be-updated-when-redis-deployed"
+  redis_port = "6379"
+  redis_db   = "0"
+  
+  # Construct URLs from the same values
+  database_url = "postgresql://${local.db_username}:${local.db_password}@${local.db_host}:${local.db_port}/${local.db_name}"
+  redis_url    = "redis://${local.redis_host}:${local.redis_port}/${local.redis_db}"
 }
 
 # Database Parameters
-resource "aws_ssm_parameter" "database_host" {
-  name  = "/backend-booking/${var.environment}/database/host"
-  type  = "String"
-  value = var.database_host != "" ? var.database_host : "placeholder-will-be-updated-when-rds-deployed"
+# Using a single DATABASE_URL for Django application
+resource "aws_ssm_parameter" "database_url" {
+  name      = "/backend-booking/${var.environment}/database/url"
+  type      = "SecureString"  # SecureString since it contains password
+  value     = local.database_url
+  overwrite = true  # Allow overwriting existing parameter
 
   tags = {
-    Name        = "Database Host"
+    Name        = "Database URL"
     Environment = var.environment
     Service     = "database"
   }
+
+  lifecycle {
+    ignore_changes = [value]  # Don't overwrite the value if it's been manually changed
+  }
 }
 
-resource "aws_ssm_parameter" "database_port" {
-  name  = "/backend-booking/${var.environment}/database/port"
-  type  = "String"
-  value = "5432"
+# Individual parameters for PgBouncer sidecar container
+# These use the SAME local variables to ensure consistency
+resource "aws_ssm_parameter" "database_host" {
+  name      = "/backend-booking/${var.environment}/database/host"
+  type      = "String"
+  value     = local.db_host
+  overwrite = true
 
   tags = {
-    Name        = "Database Port"
+    Name        = "Database Host - for PgBouncer"
     Environment = var.environment
     Service     = "database"
+  }
+  
+  lifecycle {
+    ignore_changes = [value]
   }
 }
 
 resource "aws_ssm_parameter" "database_name" {
-  name  = "/backend-booking/${var.environment}/database/name"
-  type  = "String"
-  value = var.database_name
+  name      = "/backend-booking/${var.environment}/database/name"
+  type      = "String"
+  value     = local.db_name
+  overwrite = true
 
   tags = {
-    Name        = "Database Name"
+    Name        = "Database Name - for PgBouncer"
     Environment = var.environment
     Service     = "database"
+  }
+  
+  lifecycle {
+    ignore_changes = [value]
   }
 }
 
 resource "aws_ssm_parameter" "database_username" {
-  name  = "/backend-booking/${var.environment}/database/username"
-  type  = "String"
-  value = "backend_booking_${var.environment}"
+  name      = "/backend-booking/${var.environment}/database/username"
+  type      = "String"
+  value     = local.db_username
+  overwrite = true
 
   tags = {
-    Name        = "Database Username"
+    Name        = "Database Username - for PgBouncer"
     Environment = var.environment
     Service     = "database"
+  }
+  
+  lifecycle {
+    ignore_changes = [value]
   }
 }
 
 resource "aws_ssm_parameter" "database_password" {
-  name  = "/backend-booking/${var.environment}/database/password"
-  type  = "SecureString"
-  value = var.database_password != "" ? var.database_password : "dev-password-change-in-production"
+  name      = "/backend-booking/${var.environment}/database/password"
+  type      = "SecureString"
+  value     = local.db_password
+  overwrite = true
 
   tags = {
-    Name        = "Database Password"
+    Name        = "Database Password - for PgBouncer"
     Environment = var.environment
     Service     = "database"
+  }
+  
+  lifecycle {
+    ignore_changes = [value]
   }
 }
 
 # Redis Parameters
-resource "aws_ssm_parameter" "redis_host" {
-  name  = "/backend-booking/${var.environment}/redis/host"
-  type  = "String"
-  value = var.redis_host != "" ? var.redis_host : "placeholder-will-be-updated-when-redis-deployed"
+# Redis URL for the application (using locals defined above)
+resource "aws_ssm_parameter" "redis_url" {
+  name      = "/backend-booking/${var.environment}/redis/url"
+  type      = "String"
+  value     = local.redis_url
+  overwrite = true  # Allow overwriting existing parameter
 
   tags = {
-    Name        = "Redis Host"
+    Name        = "Redis URL"
     Environment = var.environment
     Service     = "redis"
   }
-}
 
-resource "aws_ssm_parameter" "redis_port" {
-  name  = "/backend-booking/${var.environment}/redis/port"
-  type  = "String"
-  value = "6379"
-
-  tags = {
-    Name        = "Redis Port"
-    Environment = var.environment
-    Service     = "redis"
+  lifecycle {
+    ignore_changes = [value]  # Don't overwrite the value if it's been manually changed
   }
 }
 
 # AWS Configuration Parameters
-resource "aws_ssm_parameter" "aws_region" {
-  name  = "/backend-booking/${var.environment}/aws/region"
-  type  = "String"
-  value = var.aws_region
-
-  tags = {
-    Name        = "AWS Region"
-    Environment = var.environment
-    Service     = "aws"
-  }
-}
+# AWS region is provided directly to task definition, no need for parameter
+# Removed unused aws_region parameter
 
 resource "aws_ssm_parameter" "s3_bucket_name" {
   name  = "/backend-booking/${var.environment}/aws/s3-bucket-name"
