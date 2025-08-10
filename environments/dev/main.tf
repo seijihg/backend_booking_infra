@@ -266,7 +266,7 @@ module "app_service" {
   # Deployment Configuration
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = var.environment == "dev" ? 0 : 100
-  health_check_grace_period_seconds  = 60
+  health_check_grace_period_seconds  = 360
 
   # Circuit Breaker - automatic rollback on failure
   enable_deployment_circuit_breaker = true
