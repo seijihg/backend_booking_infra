@@ -161,14 +161,8 @@ resource "aws_ecs_task_definition" "app" {
         }
       }
 
-      # Health Check (container level)
-      healthCheck = var.enable_health_check ? {
-        command     = var.health_check_command
-        interval    = var.health_check_interval
-        timeout     = var.health_check_timeout
-        retries     = var.health_check_retries
-        startPeriod = var.health_check_start_period
-      } : null
+      # Health Check removed - ALB health checks are used instead
+      # Container-level health checks add unnecessary overhead when using ALB
 
       # Resource Limits (optional)
       ulimits = var.ulimits

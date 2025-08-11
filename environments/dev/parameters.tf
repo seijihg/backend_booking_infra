@@ -67,74 +67,19 @@ resource "aws_ssm_parameter" "database_url" {
 }
 
 # Individual parameters for PgBouncer sidecar container
-# These use the SAME local variables to ensure consistency
-resource "aws_ssm_parameter" "database_host" {
-  name      = "/backend-booking/${var.environment}/database/host"
-  type      = "String"
-  value     = local.db_host
-  overwrite = true
-
-  tags = {
-    Name        = "Database Host - for PgBouncer"
-    Environment = var.environment
-    Service     = "database"
-  }
-  
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-resource "aws_ssm_parameter" "database_name" {
-  name      = "/backend-booking/${var.environment}/database/name"
-  type      = "String"
-  value     = local.db_name
-  overwrite = true
-
-  tags = {
-    Name        = "Database Name - for PgBouncer"
-    Environment = var.environment
-    Service     = "database"
-  }
-  
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-resource "aws_ssm_parameter" "database_username" {
-  name      = "/backend-booking/${var.environment}/database/username"
-  type      = "String"
-  value     = local.db_username
-  overwrite = true
-
-  tags = {
-    Name        = "Database Username - for PgBouncer"
-    Environment = var.environment
-    Service     = "database"
-  }
-  
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-resource "aws_ssm_parameter" "database_password" {
-  name      = "/backend-booking/${var.environment}/database/password"
-  type      = "SecureString"
-  value     = local.db_password
-  overwrite = true
-
-  tags = {
-    Name        = "Database Password - for PgBouncer"
-    Environment = var.environment
-    Service     = "database"
-  }
-  
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
+# IMPORTANT: ALL database parameters are managed by the RDS module.
+# The RDS module creates these parameters:
+# - /backend-booking/{env}/database/host
+# - /backend-booking/{env}/database/name  
+# - /backend-booking/{env}/database/username
+# - /backend-booking/{env}/database/password
+# - /backend-booking/{env}/database/port
+#
+# The RDS module is configured with update_parameter_store = true.
+# If ECS tasks fail with "invalid ssm parameters" errors, ensure:
+# 1. The RDS module has been applied (terraform apply)
+# 2. The parameters exist in AWS SSM Parameter Store
+# 3. The ECS task execution role has ssm:GetParameter permissions
 
 # Redis Parameters
 # Redis URL for the application (using locals defined above)

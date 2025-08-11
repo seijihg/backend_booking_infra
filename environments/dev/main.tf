@@ -65,12 +65,12 @@ module "alb" {
   target_type     = "ip" # Required for Fargate
 
   # Health check configuration
-  health_check_path                = "/health/"
+  health_check_path                = "/health/"  # Django has a proper health check endpoint
   health_check_interval            = 30
-  health_check_timeout             = 5
+  health_check_timeout             = 10   # Increased timeout for Django startup
   health_check_healthy_threshold   = 2
-  health_check_unhealthy_threshold = 2
-  health_check_matcher             = "200"
+  health_check_unhealthy_threshold = 3    # More tolerance for unhealthy checks
+  health_check_matcher             = "200"  # Only accept 200 OK from health endpoint
 
   # Deregistration delay (shorter for dev)
   deregistration_delay = 15
