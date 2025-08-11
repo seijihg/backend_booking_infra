@@ -209,7 +209,7 @@ variable "db_parameters" {
   default = {
     shared_preload_libraries = "pg_stat_statements"
     log_statement            = "all"
-    log_duration             = "on"
+    log_duration             = "1"  # Use "1" instead of "on" - AWS normalizes boolean values
   }
 }
 

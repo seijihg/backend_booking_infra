@@ -117,42 +117,11 @@ variable "secrets_from_parameter_store" {
   # Example: { "API_KEY" = "/backend-booking/dev/app/api-key" }
 }
 
-# Health Check Configuration
-variable "enable_health_check" {
-  description = "Enable container health check"
-  type        = bool
-  default     = true
-}
-
-variable "health_check_command" {
-  description = "Health check command"
-  type        = list(string)
-  default     = ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
-}
-
-variable "health_check_interval" {
-  description = "Health check interval in seconds"
-  type        = number
-  default     = 30
-}
-
-variable "health_check_timeout" {
-  description = "Health check timeout in seconds"
-  type        = number
-  default     = 5
-}
-
-variable "health_check_retries" {
-  description = "Number of retries before marking unhealthy"
-  type        = number
-  default     = 3
-}
-
-variable "health_check_start_period" {
-  description = "Grace period before starting health checks in seconds"
-  type        = number
-  default     = 60
-}
+# Health Check Configuration - REMOVED
+# Container-level health checks have been removed from this module.
+# Use ALB target group health checks instead, which are more reliable
+# and don't add overhead to the container.
+# See the ALB module for health check configuration.
 
 # Container Timeouts
 variable "stop_timeout" {

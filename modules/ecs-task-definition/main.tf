@@ -3,12 +3,12 @@
 # ECS Task Definition
 resource "aws_ecs_task_definition" "app" {
   family                   = "${var.app_name}-${var.environment}"
-  network_mode             = "awsvpc"  # Required for Fargate
+  network_mode             = "awsvpc" # Required for Fargate
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.task_cpu
   memory                   = var.task_memory
   execution_role_arn       = var.execution_role_arn
-  task_role_arn           = var.task_role_arn
+  task_role_arn            = var.task_role_arn
 
   # Container Definition
   container_definitions = jsonencode([
@@ -44,7 +44,15 @@ resource "aws_ecs_task_definition" "app" {
             value = var.allowed_hosts
           },
           {
+            name  = "DJANGO_ALLOWED_HOSTS"
+            value = var.allowed_hosts
+          },
+          {
             name  = "DEBUG"
+            value = var.debug_mode ? "True" : "False"
+          },
+          {
+            name  = "DEVELOPMENT_MODE"
             value = var.debug_mode ? "True" : "False"
           },
           {
@@ -95,8 +103,16 @@ resource "aws_ecs_task_definition" "app" {
             valueFrom = "/backend-booking/${var.environment}/database/username"
           },
           {
-            name      = "REDIS_HOST"
-            valueFrom = "/backend-booking/${var.environment}/redis/host"
+            name      = "DATABASE_URL"
+            valueFrom = "/backend-booking/${var.environment}/database/url"
+          },
+          {
+            name      = "REDIS_URL"
+            valueFrom = "/backend-booking/${var.environment}/redis/url"
+          },
+          {
+            name      = "SEED_OWNER_DEFAULT_PASSWORD"
+            valueFrom = "/backend-booking/${var.environment}/seed-data/owner-default-password"
           }
         ],
         # Optional Twilio configuration
@@ -145,14 +161,8 @@ resource "aws_ecs_task_definition" "app" {
         }
       }
 
-      # Health Check (container level)
-      healthCheck = var.enable_health_check ? {
-        command     = var.health_check_command
-        interval    = var.health_check_interval
-        timeout     = var.health_check_timeout
-        retries     = var.health_check_retries
-        startPeriod = var.health_check_start_period
-      } : null
+      # Health Check removed - ALB health checks are used instead
+      # Container-level health checks add unnecessary overhead when using ALB
 
       # Resource Limits (optional)
       ulimits = var.ulimits
@@ -214,7 +224,7 @@ resource "aws_ecs_task_definition" "app" {
           root_directory          = lookup(efs_volume_configuration.value, "root_directory", "/")
           transit_encryption      = lookup(efs_volume_configuration.value, "transit_encryption", "ENABLED")
           transit_encryption_port = lookup(efs_volume_configuration.value, "transit_encryption_port", null)
-          
+
           dynamic "authorization_config" {
             for_each = lookup(efs_volume_configuration.value, "authorization_config", null) != null ? [efs_volume_configuration.value.authorization_config] : []
             content {
@@ -230,7 +240,7 @@ resource "aws_ecs_task_definition" "app" {
   # Runtime platform (for ARM64 if needed)
   runtime_platform {
     operating_system_family = var.operating_system_family
-    cpu_architecture       = var.cpu_architecture
+    cpu_architecture        = var.cpu_architecture
   }
 
   # Tags
