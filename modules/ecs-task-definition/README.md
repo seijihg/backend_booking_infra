@@ -20,7 +20,7 @@ Task Definition
 │   ├── Environment Variables
 │   ├── Secrets from Parameter Store
 │   ├── Port: 8000
-│   └── Health Check: /health/
+│   └── Health Check: Removed (use ALB health checks)
 ├── Resources
 │   ├── CPU: 512-4096
 │   └── Memory: 1024-8192
@@ -171,15 +171,18 @@ module "task_definition" {
 
 ## Health Checks
 
-The module configures container-level health checks:
+Container-level health checks have been **completely removed** from this module. 
 
-```hcl
-health_check_command = ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
-health_check_interval = 30  # seconds
-health_check_timeout = 5    # seconds
-health_check_retries = 3
-health_check_start_period = 60  # grace period
-```
+**Why removed?**
+- ALB target group health checks are more reliable and sufficient
+- Container health checks add unnecessary overhead (CPU/memory for curl commands)
+- Having both ALB and container health checks creates redundancy and confusion
+- ALB health checks test actual HTTP endpoints, not just container status
+
+**For health check configuration:**
+- Configure health checks in the ALB module's target group settings
+- ALB health checks support custom paths, intervals, thresholds, and HTTP status codes
+- ECS will automatically replace unhealthy tasks based on ALB health check results
 
 ## Advanced Features
 
@@ -266,6 +269,9 @@ resource "aws_ecs_service" "app" {
 
 ### Health Check Failures
 
-- Verify `/health/` endpoint returns 200
-- Increase `health_check_start_period` for slow-starting apps
-- Check application logs for startup errors
+Since container health checks are removed, troubleshoot via ALB:
+- Verify the ALB target group health check path is correct
+- Check the ALB target group health check settings in the ALB module
+- Review ECS service logs for startup errors
+- Check CloudWatch metrics for unhealthy target count
+- Use ECS Exec to test the application endpoint directly
