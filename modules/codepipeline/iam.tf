@@ -28,17 +28,19 @@ resource "aws_iam_role_policy" "codepipeline" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # GitHub source permissions
       {
+        Sid    = "GitHubConnection"
         Effect = "Allow"
         Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters"
+          "codestar-connections:UseConnection"
         ]
-        Resource = [
-          "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter${var.github_token_parameter_name}"
-        ]
+        Resource = aws_codestarconnections_connection.github.arn
       },
+      
+      # S3 artifact store permissions
       {
+        Sid    = "S3ArtifactStore"
         Effect = "Allow"
         Action = [
           "s3:GetObject",
@@ -54,7 +56,10 @@ resource "aws_iam_role_policy" "codepipeline" {
           "${aws_s3_bucket.pipeline_artifacts.arn}/*"
         ]
       },
+      
+      # CodeBuild permissions
       {
+        Sid    = "CodeBuildProject"
         Effect = "Allow"
         Action = [
           "codebuild:BatchGetBuilds",
@@ -62,19 +67,52 @@ resource "aws_iam_role_policy" "codepipeline" {
         ]
         Resource = aws_codebuild_project.main.arn
       },
+      # ECS permissions for standard deployments
       {
+        Sid    = "ECSDeployment"
         Effect = "Allow"
         Action = [
+          # Core deployment permissions
+          "ecs:UpdateService",
+          "ecs:RegisterTaskDefinition",
           "ecs:DescribeServices",
           "ecs:DescribeTaskDefinition",
           "ecs:DescribeTasks",
           "ecs:ListTasks",
-          "ecs:RegisterTaskDefinition",
-          "ecs:UpdateService"
+          "ecs:DescribeClusters",
+          
+          # Task management
+          "ecs:RunTask",
+          "ecs:StopTask",
+          
+          # Service discovery
+          "ecs:DiscoverPollEndpoint",
+          
+          # Resource tagging
+          "ecs:TagResource",
+          "ecs:UntagResource",
+          "ecs:ListTagsForResource"
         ]
         Resource = "*"
       },
+      
+      # ECR permissions for pulling images
       {
+        Sid    = "ECRAccess"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:DescribeImages"
+        ]
+        Resource = "*"
+      },
+      
+      # IAM PassRole for ECS tasks
+      {
+        Sid    = "PassRoleToECS"
         Effect = "Allow"
         Action = [
           "iam:PassRole"
@@ -83,15 +121,41 @@ resource "aws_iam_role_policy" "codepipeline" {
           var.ecs_task_execution_role_arn,
           var.ecs_task_role_arn
         ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
       },
+      
+      # CloudWatch Logs permissions
       {
+        Sid    = "CloudWatchLogs"
         Effect = "Allow"
         Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codepipeline/*"
+        Resource = [
+          "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codepipeline/*",
+          "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/*"
+        ]
+      },
+      
+      # Load Balancer permissions for target group updates
+      {
+        Sid    = "LoadBalancerAccess"
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeListeners",
+          "elasticloadbalancing:DescribeRules",
+          "elasticloadbalancing:DescribeTargetHealth",
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -125,6 +189,13 @@ resource "aws_iam_role_policy" "codebuild" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "codestar-connections:UseConnection"
+        ]
+        Resource = aws_codestarconnections_connection.github.arn
+      },
       {
         Effect = "Allow"
         Action = [

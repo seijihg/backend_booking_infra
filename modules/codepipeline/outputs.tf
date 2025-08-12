@@ -1,5 +1,16 @@
 # CodePipeline Module Outputs
 
+# CodeStar Connection
+output "codestar_connection_arn" {
+  description = "ARN of the CodeStar connection for GitHub"
+  value       = aws_codestarconnections_connection.github.arn
+}
+
+output "codestar_connection_status" {
+  description = "Status of the CodeStar connection (PENDING until manually approved)"
+  value       = aws_codestarconnections_connection.github.connection_status
+}
+
 output "pipeline_name" {
   description = "Name of the CodePipeline"
   value       = aws_codepipeline.main.name
@@ -32,8 +43,8 @@ output "codebuild_role_arn" {
 }
 
 output "codebuild_badge_url" {
-  description = "URL of the CodeBuild badge"
-  value       = var.enable_build_badge ? aws_codebuild_project.main.badge_url : ""
+  description = "URL of the CodeBuild badge (not available with CodePipeline source)"
+  value       = ""  # Badge not supported with CodePipeline source
 }
 
 # S3 Artifacts

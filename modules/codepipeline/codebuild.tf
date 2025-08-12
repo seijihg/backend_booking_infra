@@ -48,6 +48,11 @@ resource "aws_codebuild_project" "main" {
       value = var.app_name
     }
 
+    environment_variable {
+      name  = "CONTAINER_NAME"
+      value = var.container_name != "" ? var.container_name : "${var.app_name}-app"
+    }
+
     # Parameter Store paths for build-time secrets (if needed)
     dynamic "environment_variable" {
       for_each = var.build_parameter_store_secrets
@@ -94,8 +99,8 @@ resource "aws_codebuild_project" "main" {
   build_timeout = var.build_timeout
   queued_timeout = var.queued_timeout
 
-  # Build badge
-  badge_enabled = var.enable_build_badge
+  # Build badge - disabled for CodePipeline source (not supported)
+  badge_enabled = false
 
   tags = merge(
     var.tags,
