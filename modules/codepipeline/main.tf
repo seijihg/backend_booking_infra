@@ -1,13 +1,27 @@
 # CodePipeline Module - CI/CD Pipeline for ECS Deployment
 
-# Data source to retrieve GitHub token from Parameter Store
-data "aws_ssm_parameter" "github_token" {
-  name = var.github_token_parameter_name
+# CodeStar Connection for GitHub (v2 - recommended approach)
+resource "aws_codestarconnections_connection" "github" {
+  # Name must be ≤32 characters
+  name          = "${var.app_name}-${var.environment}-github"
+  provider_type = "GitHub"
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${var.app_name}-${var.environment}-github-connection"
+      Environment = var.environment
+      Purpose     = "GitHub integration for CodePipeline"
+    }
+  )
 }
 
 # S3 Bucket for Pipeline Artifacts
 resource "aws_s3_bucket" "pipeline_artifacts" {
   bucket = "${var.app_name}-${var.environment}-pipeline-artifacts-${data.aws_caller_identity.current.account_id}"
+  
+  # Allow Terraform to delete the bucket even if it contains objects
+  force_destroy = true
 
   tags = merge(
     var.tags,
@@ -65,23 +79,25 @@ resource "aws_codepipeline" "main" {
     type     = "S3"
   }
 
-  # Source Stage - GitHub
+  # Source Stage - GitHub v2 with CodeStar Connection
   stage {
     name = "Source"
 
     action {
       name             = "Source"
       category         = "Source"
-      owner            = "ThirdParty"
-      provider         = "GitHub"
+      owner            = "AWS"
+      provider         = "CodeStarSourceConnection"
       version          = "1"
       output_artifacts = ["source_output"]
 
       configuration = {
-        Owner      = var.github_owner
-        Repo       = var.github_repo
-        Branch     = var.github_branch
-        OAuthToken = data.aws_ssm_parameter.github_token.value
+        ConnectionArn    = aws_codestarconnections_connection.github.arn
+        FullRepositoryId = "${var.github_owner}/${var.github_repo}"
+        BranchName       = var.github_branch
+        
+        # Optional: Enable git clone depth for faster checkouts
+        OutputArtifactFormat = "CODEBUILD_CLONE_REF"
       }
     }
   }

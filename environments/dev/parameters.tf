@@ -185,23 +185,26 @@ resource "aws_ssm_parameter" "seed_owner_default_password" {
 }
 
 # CI/CD Parameters
-# Note: GitHub token should be stored manually using the setup-github-token.sh script
-# This creates a placeholder parameter that documents where the token should be stored
+# Note: GitHub integration now uses AWS CodeStar Connections (v2) instead of OAuth tokens
+# The connection must be manually approved in the AWS Console after creation
+# No GitHub token is required in Parameter Store anymore
+# The github_token_placeholder resource below has been disabled (count = 0)
+
 resource "aws_ssm_parameter" "github_token_placeholder" {
-  count = 0  # Set to 1 only if you want to create a placeholder
+  count = 0  # DEPRECATED - CodeStar Connections v2 doesn't need GitHub tokens
   
   name  = "/backend-booking/common/github-token"
   type  = "SecureString"
-  value = "PLACEHOLDER - Use scripts/setup-github-token.sh to set the actual token"
+  value = "DEPRECATED - No longer needed with CodeStar Connections"
 
   tags = {
-    Name        = "GitHub Token for CodePipeline"
+    Name        = "DEPRECATED - GitHub Token (not needed with CodeStar)"
     Environment = "common"
     Service     = "ci-cd"
-    Note        = "Use setup-github-token.sh script to set actual value"
+    Note        = "CodeStar Connections v2 replaces OAuth tokens"
   }
   
   lifecycle {
-    ignore_changes = [value]  # Ignore changes to the value after initial creation
+    ignore_changes = [value]
   }
 }

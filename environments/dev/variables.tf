@@ -126,6 +126,23 @@ variable "twilio_phone_number" {
   default     = "+447723468188"
 }
 
+# GitHub Configuration for CodePipeline
+variable "github_owner" {
+  description = "GitHub repository owner"
+  type        = string
+  default     = "seijihg"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+  default     = "backend_booking"
+}
+
+# Note: GitHub token is stored in AWS Parameter Store at /backend-booking/common/github-token
+# The CodePipeline module retrieves it directly from Parameter Store
+# No need to pass it as a Terraform variable for security reasons
+
 # Seed Data Configuration (non-sensitive)
 variable "seed_data" {
   description = "Seed data configuration for initial setup (non-sensitive data)"

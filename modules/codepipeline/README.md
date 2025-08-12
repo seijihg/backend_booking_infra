@@ -2,14 +2,22 @@
 
 This module creates a complete CI/CD pipeline for building Docker images from GitHub and deploying them to ECS using AWS CodePipeline.
 
+## Important Update: GitHub v2 Integration
+
+**This module now uses AWS CodeStar Connections (GitHub v2) instead of OAuth tokens.** This is the AWS-recommended approach that provides:
+- Better security (no token storage needed)
+- Automatic webhook management
+- More reliable connection
+- Full git clone support
+
 ## Architecture
 
 ```
 GitHub Repository
-    ↓ (Webhook on push)
+    ↓ (CodeStar Connection)
 CodePipeline
     ├── Source Stage
-    │   └── GitHub Source (main branch)
+    │   └── CodeStar Source Connection (GitHub v2)
     ├── Build Stage
     │   └── CodeBuild Project
     │       ├── Pull source code
@@ -25,9 +33,21 @@ CodePipeline
 
 ## Pipeline Flow
 
-1. **Source Stage**: Triggered by push to GitHub main branch
+1. **Source Stage**: Triggered by push to GitHub via CodeStar Connection
 2. **Build Stage**: Builds Docker image and pushes to ECR
 3. **Deploy Stage**: Updates ECS service with new container image
+
+## Setup Requirements
+
+### CodeStar Connection Approval
+
+After deploying this module, you MUST manually approve the CodeStar connection:
+
+1. Navigate to AWS Console → Developer Tools → Settings → Connections
+2. Find your connection (named `{app_name}-{environment}-github`)
+3. Click "Update pending connection"
+4. Authorize the connection in GitHub
+5. Connection status will change from "Pending" to "Available"
 
 ## Usage
 
@@ -40,11 +60,10 @@ module "codepipeline" {
   app_name    = "backend-booking"
   environment = "dev"
 
-  # GitHub Configuration
+  # GitHub Configuration (no token needed with CodeStar Connections!)
   github_owner  = "seijihg"
   github_repo   = "backend_booking"
   github_branch = "main"
-  github_token_parameter_name = "/backend-booking/common/github-token"  # Default path
 
   # ECR Configuration
   ecr_repository_url = aws_ecr_repository.app.repository_url
@@ -277,6 +296,12 @@ sns_topic_arn = aws_sns_topic.alerts.arn
 - CodeBuild: $0.005/minute (Linux small)
 - S3 Storage: ~$0.023/GB for artifacts
 - Total: ~$5-20/month depending on build frequency
+
+## Known Limitations
+
+1. **Build Badges**: Build badges are not supported when CodeBuild uses CodePipeline as source. This is an AWS limitation.
+2. **Connection Name Length**: CodeStar connection names must be ≤32 characters.
+3. **Manual Connection Approval**: The CodeStar GitHub connection requires one-time manual approval in the AWS Console.
 
 ## Security Considerations
 

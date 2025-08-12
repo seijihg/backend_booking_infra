@@ -30,9 +30,9 @@ variable "github_branch" {
 }
 
 variable "github_token_parameter_name" {
-  description = "Name of the Parameter Store parameter containing the GitHub token"
+  description = "DEPRECATED - No longer used with CodeStar Connections. GitHub token parameter name (kept for backward compatibility)"
   type        = string
-  default     = "/backend-booking/common/github-token"
+  default     = ""
 }
 
 # ECR Configuration
@@ -51,6 +51,12 @@ variable "ecs_service_name" {
   description = "Name of the ECS service to deploy to"
   type        = string
   default     = ""  # Optional - only needed when service exists
+}
+
+variable "container_name" {
+  description = "Name of the container in the task definition (defaults to {app_name}-app)"
+  type        = string
+  default     = ""
 }
 
 variable "ecs_task_execution_role_arn" {
