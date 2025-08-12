@@ -47,6 +47,62 @@ resource "aws_ecr_lifecycle_policy" "app" {
   })
 }
 
+# CodePipeline CI/CD Module - Automated deployment from GitHub
+module "codepipeline" {
+  source = "../../modules/codepipeline"
+
+  app_name    = var.app_name
+  environment = var.environment
+
+  # GitHub Configuration - triggers on main branch
+  github_owner  = var.github_owner
+  github_repo   = var.github_repo
+  github_branch = "main" # Triggers on merge to main
+  # Note: GitHub connection now uses CodeStar Connections (v2) instead of OAuth token
+
+  # ECR Configuration
+  ecr_repository_url = aws_ecr_repository.app.repository_url
+
+  # ECS Configuration
+  ecs_cluster_name            = module.ecs_cluster.cluster_id
+  ecs_service_name            = module.app_service.service_name
+  container_name              = "${var.app_name}-app"  # Must match task definition
+  ecs_task_execution_role_arn = module.ecs_cluster.task_execution_role_arn
+  ecs_task_role_arn           = module.ecs_cluster.task_role_arn
+
+  # Build Configuration
+  build_compute_type = "BUILD_GENERAL1_SMALL" # Sufficient for dev
+  build_timeout      = 30
+  enable_build_badge = true
+
+  # Build environment secrets from Parameter Store
+  # Note: Build process doesn't need Django secrets - they're injected at runtime by ECS
+  build_parameter_store_secrets = {}
+
+  # No manual approval for dev environment
+  require_manual_approval = false
+  deployment_timeout      = 10
+
+  # Logging
+  log_retention_days = var.log_retention_days
+
+  # Notifications (optional - add SNS topic when ready)
+  enable_notifications = false
+
+  tags = {
+    Environment = var.environment
+    Project     = var.app_name
+    ManagedBy   = "Terraform"
+    Purpose     = "CI/CD Pipeline"
+  }
+
+  # Ensure cluster and service exist before creating pipeline
+  depends_on = [
+    module.ecs_cluster,
+    module.app_service
+  ]
+}
+
 # Application Load Balancer Module
 module "alb" {
   source = "../../modules/alb"
@@ -65,12 +121,12 @@ module "alb" {
   target_type     = "ip" # Required for Fargate
 
   # Health check configuration
-  health_check_path                = "/health/"  # Django has a proper health check endpoint
+  health_check_path                = "/health/" # Django has a proper health check endpoint
   health_check_interval            = 30
-  health_check_timeout             = 10   # Increased timeout for Django startup
+  health_check_timeout             = 10 # Increased timeout for Django startup
   health_check_healthy_threshold   = 2
-  health_check_unhealthy_threshold = 3    # More tolerance for unhealthy checks
-  health_check_matcher             = "200"  # Only accept 200 OK from health endpoint
+  health_check_unhealthy_threshold = 3     # More tolerance for unhealthy checks
+  health_check_matcher             = "200" # Only accept 200 OK from health endpoint
 
   # Deregistration delay (shorter for dev)
   deregistration_delay = 15

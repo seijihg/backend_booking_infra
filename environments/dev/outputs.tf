@@ -230,3 +230,44 @@ output "rds_parameter_store_paths" {
   description = "Parameter Store paths for database credentials"
   value       = module.rds.parameter_store_paths
 }
+
+# CodePipeline Outputs
+output "codepipeline_name" {
+  description = "Name of the CodePipeline"
+  value       = module.codepipeline.pipeline_name
+}
+
+output "codepipeline_arn" {
+  description = "ARN of the CodePipeline"
+  value       = module.codepipeline.pipeline_arn
+}
+
+output "codepipeline_artifact_bucket" {
+  description = "S3 bucket for pipeline artifacts"
+  value       = module.codepipeline.artifacts_bucket_name
+}
+
+output "codebuild_project_name" {
+  description = "Name of the CodeBuild project"
+  value       = module.codepipeline.codebuild_project_name
+}
+
+output "codebuild_project_arn" {
+  description = "ARN of the CodeBuild project"
+  value       = module.codepipeline.codebuild_project_arn
+}
+
+output "codebuild_badge_url" {
+  description = "URL of the CodeBuild badge"
+  value       = module.codepipeline.codebuild_badge_url
+}
+
+output "codestar_connection_status" {
+  description = "Status of the CodeStar GitHub connection (must be manually approved)"
+  value       = module.codepipeline.codestar_connection_status
+}
+
+output "codestar_connection_arn" {
+  description = "ARN of the CodeStar connection"
+  value       = module.codepipeline.codestar_connection_arn
+}
