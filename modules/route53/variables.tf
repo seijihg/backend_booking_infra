@@ -41,3 +41,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "existing_zone_id" {
+  description = "Existing Route53 hosted zone ID to use (if multiple zones exist with same name)"
+  type        = string
+  default     = ""
+}
