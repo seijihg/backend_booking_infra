@@ -225,7 +225,7 @@ module "app_task_definition" {
 
   # Additional environment variables if needed
   environment_variables = {
-    "CORS_ALLOWED_ORIGINS"    = "*" # Adjust for production
+    "CORS_ALLOWED_ORIGINS"    = "https://book.lichnails.co.uk,http://localhost:3000" # Frontend domains
     "USE_X_FORWARDED_HOST"    = "True"
     "SECURE_PROXY_SSL_HEADER" = "HTTP_X_FORWARDED_PROTO,https"
     # Seed data for initial setup
@@ -389,6 +389,7 @@ module "rds" {
   # Ensure VPC endpoints are ready before creating RDS
   depends_on = [module.vpc_endpoints]
 }
+
 
 # TODO: Next steps:
 # 1. ElastiCache Redis module

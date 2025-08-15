@@ -18,6 +18,12 @@ variable "app_name" {
   default     = "backend-booking"
 }
 
+variable "domain_name" {
+  description = "The domain name for Route53 hosted zone"
+  type        = string
+  default     = "lichnails.co.uk"
+}
+
 # ECS Configuration Variables
 variable "ecs_image_tag" {
   description = "Docker image tag to deploy"
