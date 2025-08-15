@@ -5,8 +5,9 @@ Infrastructure as Code (IaC) for deploying the Backend Booking Django applicatio
 ## Current Status
 
 ### Development Environment
+
 - ✅ **VPC and Networking**: Fully configured with public/private subnets
-- ✅ **RDS PostgreSQL**: Running and accessible  
+- ✅ **RDS PostgreSQL**: Running and accessible
 - ✅ **ElastiCache Redis**: Deployed and operational
 - ✅ **ECS Cluster**: Active with Fargate tasks
 - ✅ **Application Load Balancer**: Configured and routing traffic
@@ -18,6 +19,7 @@ Infrastructure as Code (IaC) for deploying the Backend Booking Django applicatio
   - ECS service updates triggered automatically
 
 ### Production Environment
+
 - 🔄 Not yet deployed (pending domain and SSL setup)
 
 ## Quick Start
@@ -31,5 +33,3 @@ terraform apply
 
 # CodePipeline will automatically deploy application updates when code is pushed to the dev branch
 ```
-
-For detailed architecture and deployment instructions, see [CLAUDE.md](./CLAUDE.md)
