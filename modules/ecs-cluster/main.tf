@@ -212,6 +212,38 @@ resource "aws_iam_role_policy" "ecs_task_cloudwatch" {
   })
 }
 
+# ECS Exec (SSM) permissions for task role - required for aws ecs execute-command
+resource "aws_iam_role_policy" "ecs_task_exec_ssm" {
+  name = "${var.app_name}-${var.environment}-ecs-task-exec-ssm-policy"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups",
+          "logs:CreateLogStream",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Service Discovery Namespace (Optional)
 resource "aws_service_discovery_private_dns_namespace" "main" {
   count = var.enable_service_discovery ? 1 : 0

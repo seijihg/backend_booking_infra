@@ -160,9 +160,9 @@ variable "copy_tags_to_snapshot" {
 
 # Monitoring
 variable "enabled_cloudwatch_logs_exports" {
-  description = "List of log types to export to CloudWatch"
+  description = "List of log types to export to CloudWatch (costly, disable for dev)"
   type        = list(string)
-  default     = ["postgresql"]
+  default     = [] # Disabled by default - enable only when needed for debugging/compliance
 }
 
 variable "monitoring_interval" {
@@ -208,8 +208,9 @@ variable "db_parameters" {
   type        = map(string)
   default = {
     shared_preload_libraries = "pg_stat_statements"
-    log_statement            = "all"
-    log_duration             = "1"  # Use "1" instead of "on" - AWS normalizes boolean values
+    # Minimal logging for cost savings - override in production for debugging/compliance
+    log_statement = "none" # Changed from "all" - use "ddl" to log only schema changes
+    log_duration  = "0"    # Changed from "1" - disable query duration logging
   }
 }
 
