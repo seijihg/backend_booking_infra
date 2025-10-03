@@ -28,20 +28,8 @@ resource "aws_ecs_task_definition" "app" {
       environment = concat(
         [
           {
-            name  = "DJANGO_SETTINGS_MODULE"
-            value = var.django_settings_module
-          },
-          {
             name  = "ENVIRONMENT"
             value = var.environment
-          },
-          {
-            name  = "PORT"
-            value = tostring(var.container_port)
-          },
-          {
-            name  = "ALLOWED_HOSTS"
-            value = var.allowed_hosts
           },
           {
             name  = "DJANGO_ALLOWED_HOSTS"
@@ -58,18 +46,6 @@ resource "aws_ecs_task_definition" "app" {
           {
             name  = "PYTHONUNBUFFERED"
             value = "1"
-          },
-          {
-            name  = "DATABASE_ENGINE"
-            value = "django.db.backends.postgresql"
-          },
-          {
-            name  = "DATABASE_PORT"
-            value = "5432"
-          },
-          {
-            name  = "REDIS_PORT"
-            value = "6379"
           }
         ],
         # Additional custom environment variables
@@ -85,22 +61,6 @@ resource "aws_ecs_task_definition" "app" {
           {
             name      = "DJANGO_SECRET_KEY"
             valueFrom = "/backend-booking/${var.environment}/app/django-secret-key"
-          },
-          {
-            name      = "DATABASE_PASSWORD"
-            valueFrom = "/backend-booking/${var.environment}/database/password"
-          },
-          {
-            name      = "DATABASE_HOST"
-            valueFrom = "/backend-booking/${var.environment}/database/host"
-          },
-          {
-            name      = "DATABASE_NAME"
-            valueFrom = "/backend-booking/${var.environment}/database/name"
-          },
-          {
-            name      = "DATABASE_USER"
-            valueFrom = "/backend-booking/${var.environment}/database/username"
           },
           {
             name      = "DATABASE_URL"

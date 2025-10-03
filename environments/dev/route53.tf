@@ -62,6 +62,12 @@ resource "aws_acm_certificate_validation" "backend" {
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
+# Output the certificate ARN for use in ALB
+output "certificate_arn" {
+  description = "The ARN of the validated ACM certificate"
+  value       = aws_acm_certificate_validation.backend.certificate_arn
+}
+
 # Output the important DNS information
 output "route53_name_servers" {
   description = "Name servers for lichnails.co.uk - Update your domain registrar with these"

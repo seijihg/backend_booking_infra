@@ -66,11 +66,6 @@ variable "log_group_name" {
 }
 
 # Django Configuration
-variable "django_settings_module" {
-  description = "Django settings module path"
-  type        = string
-  default     = "config.settings.production"
-}
 
 variable "allowed_hosts" {
   description = "Django ALLOWED_HOSTS setting"
@@ -234,7 +229,7 @@ variable "volumes" {
       transit_encryption_port = optional(number)
       authorization_config = optional(object({
         access_point_id = optional(string)
-        iam            = optional(string)
+        iam             = optional(string)
       }))
     }))
   }))

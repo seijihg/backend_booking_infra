@@ -66,7 +66,7 @@ module "codepipeline" {
   # ECS Configuration
   ecs_cluster_name            = module.ecs_cluster.cluster_id
   ecs_service_name            = module.app_service.service_name
-  container_name              = "${var.app_name}-app"  # Must match task definition
+  container_name              = "${var.app_name}-app" # Must match task definition
   ecs_task_execution_role_arn = module.ecs_cluster.task_execution_role_arn
   ecs_task_role_arn           = module.ecs_cluster.task_role_arn
 
@@ -131,8 +131,8 @@ module "alb" {
   # Deregistration delay (shorter for dev)
   deregistration_delay = 15
 
-  # SSL/TLS (disabled for dev - add certificate ARN for HTTPS)
-  certificate_arn = "" # var.certificate_arn when ready
+  # SSL/TLS - Enable HTTPS with ACM certificate
+  certificate_arn = aws_acm_certificate_validation.backend.certificate_arn
 
   # Development settings
   enable_deletion_protection = false
@@ -214,9 +214,8 @@ module "app_task_definition" {
   log_group_name = module.ecs_cluster.log_group_name
 
   # Django configuration
-  django_settings_module = "booking_api.settings" # Django project is booking_api, not config
-  allowed_hosts          = var.allowed_hosts
-  debug_mode             = var.environment == "dev" ? true : false
+  allowed_hosts = var.allowed_hosts
+  debug_mode    = var.environment == "dev" ? true : false
 
   # Optional services (disabled for now)
   enable_twilio              = true # Enable when Twilio is configured
@@ -225,7 +224,6 @@ module "app_task_definition" {
 
   # Additional environment variables if needed
   environment_variables = {
-    "CORS_ALLOWED_ORIGINS"    = "https://book.lichnails.co.uk,http://localhost:3000" # Frontend domains
     "USE_X_FORWARDED_HOST"    = "True"
     "SECURE_PROXY_SSL_HEADER" = "HTTP_X_FORWARDED_PROTO,https"
     # Seed data for initial setup
@@ -338,55 +336,6 @@ module "app_service" {
   }
 
   # Ensure VPC endpoints are created before the service
-  depends_on = [module.vpc_endpoints]
-}
-
-# RDS PostgreSQL Database Module
-module "rds" {
-  source = "../../modules/rds"
-
-  app_name    = var.app_name
-  environment = var.environment
-  vpc_id      = module.networking.vpc_id
-
-  # Use both private subnets for RDS subnet group (required by AWS)
-  subnet_ids = module.networking.private_subnet_ids
-
-  # Allow access from ECS tasks
-  security_group_ids = [aws_security_group.ecs_tasks.id]
-
-  # Database configuration
-  # RDS requires alphanumeric only (no hyphens or underscores in db_name)
-  db_name     = "${replace(var.app_name, "-", "")}${var.environment}"   # Results in "backendbookingdev"
-  db_username = "${replace(var.app_name, "-", "_")}_${var.environment}" # Username can have underscores
-  # Password will be auto-generated and stored in Parameter Store
-
-  # Dev environment settings (cost-optimized)
-  instance_class        = "db.t3.micro" # Free tier eligible
-  allocated_storage     = 20
-  max_allocated_storage = 0     # Disable autoscaling for dev
-  multi_az              = false # Single AZ for dev
-  deletion_protection   = false # Allow deletion in dev
-
-  # Backup configuration (minimal for dev)
-  backup_retention_period = 1    # Keep backups for 1 day only
-  skip_final_snapshot     = true # Don't create snapshot on deletion
-
-  # Monitoring (disabled for dev to save costs)
-  monitoring_interval          = 0     # Disabled
-  performance_insights_enabled = false # Disabled
-
-  # Parameter Store integration
-  parameter_store_path   = "/backend-booking/${var.environment}/database"
-  update_parameter_store = true # Automatically update Parameter Store
-
-  tags = {
-    Environment = var.environment
-    Project     = var.app_name
-    ManagedBy   = "Terraform"
-  }
-
-  # Ensure VPC endpoints are ready before creating RDS
   depends_on = [module.vpc_endpoints]
 }
 
