@@ -1,6 +1,6 @@
 # Infrastructure Status & Future Modules
 
-## Current Date: November 2024
+## Current Date: October 2025
 
 This document tracks the current state of the Backend Booking infrastructure and planned future enhancements.
 
@@ -56,6 +56,14 @@ This document tracks the current state of the Backend Booking infrastructure and
   - Private connectivity to AWS services
   - ECR, SSM, CloudWatch endpoints
   - Status: ✅ Configured for secure access
+
+### DNS & SSL Infrastructure
+- **Route53 Module** (`modules/route53/`)
+  - Hosted zone management for lichnails.co.uk domain
+  - DNS records for ALB (api-dev.lichnails.co.uk)
+  - ACM SSL certificate with DNS validation
+  - CNAME record for Vercel frontend (usa-berko subdomain)
+  - Status: ✅ Deployed and operational (October 2025)
 
 ### Supporting Infrastructure
 - **ECR Repository**: ✅ Created with lifecycle policies
@@ -124,13 +132,16 @@ module "s3" {
 - WAF integration (optional)
 
 ### 2. Route53 DNS Module
+**Status**: ✅ **DEPLOYED TO DEVELOPMENT**
 **Priority**: High for Production
 **Purpose**: DNS management and health checks
 **Features**:
-- Hosted zone management
-- A records for ALB
-- CNAME for CloudFront
-- Health checks and failover
+- ✅ Hosted zone management (using existing registrar zone)
+- ✅ A records for ALB (api-dev.lichnails.co.uk)
+- ✅ ACM SSL certificate with DNS validation
+- ✅ CNAME for Vercel frontend (usa-berko.lichnails.co.uk)
+- 🔄 Health checks and failover (pending)
+**Production Status**: Ready for deployment with prod subdomain
 
 ### 3. Dramatiq Worker Module
 **Priority**: High
@@ -142,10 +153,11 @@ module "s3" {
 - CloudWatch metrics integration
 
 ### 4. CodePipeline CI/CD Module
-**Priority**: ✅ COMPLETED FOR DEV
+**Status**: ✅ **PRODUCTION READY**
+**Priority**: Completed
 **Purpose**: Automated deployments
 **Current**: Module exists at `modules/codepipeline/`
-**Status**: ✅ **Successfully deployed to development environment**
+**Development Status**: ✅ Successfully deployed and operational
 **Deployment Date**: December 2024
 **Features Implemented**:
 - ✅ GitHub webhook triggers (automated from `dev` branch)
@@ -154,7 +166,8 @@ module "s3" {
 - ✅ ECS service updates (rolling deployment)
 - ✅ Parameter Store integration
 - ✅ CloudWatch logging
-**Production Status**: Ready for deployment (pending domain setup)
+**Production Status**: ✅ Module ready for deployment to `main` branch
+**Next Steps**: Deploy production pipeline when prod environment is configured
 
 ### 5. Backup Module
 **Priority**: Medium
@@ -215,36 +228,42 @@ module "s3" {
 ### Immediate (This Week)
 1. ✅ Fix ALB health checks (COMPLETED)
 2. ✅ Resolve SSM parameter conflicts (COMPLETED)
-3. Deploy Redis/ElastiCache for session storage
-4. Create S3 buckets for static files
+3. ✅ Configure Route53 DNS and SSL (COMPLETED - October 2025)
+4. Deploy Redis/ElastiCache for session storage
+5. Create S3 buckets for static files
 
 ### Short Term (Next 2 Weeks)
-1. ✅ ~~Set up CI/CD pipeline with CodePipeline~~ (COMPLETED)
-2. Set up CloudFront CDN
-3. Configure Route53 for custom domain
-4. Deploy Dramatiq workers for background jobs
-5. Implement basic monitoring dashboards
+1. ✅ Set up CI/CD pipeline with CodePipeline (COMPLETED - December 2024)
+2. ✅ Configure Route53 for custom domain (COMPLETED - October 2025)
+3. Test end-to-end HTTPS connectivity (api-dev.lichnails.co.uk)
+4. Set up CloudFront CDN for static assets
+5. Deploy Dramatiq workers for background jobs
+6. Implement basic monitoring dashboards
 
 ### Medium Term (Next Month)
-1. Deploy CodePipeline to production environment
-2. Implement comprehensive backup strategy
-3. Add advanced monitoring and alerting
-4. Deploy WAF for production readiness
+1. Configure production environment with api.lichnails.co.uk subdomain
+2. Deploy CodePipeline to production environment (module ready)
+3. Implement comprehensive backup strategy
+4. Add advanced monitoring and alerting
+5. Deploy WAF for production readiness
 
 ### Long Term (Next Quarter)
-1. Multi-region disaster recovery
+1. Multi-region disaster recovery planning
 2. Advanced auto-scaling strategies
 3. Cost optimization initiatives
-4. Security hardening and compliance
+4. Security hardening and compliance audits
 
 ## 📊 Current Infrastructure Costs (Estimated)
 
 ### Development Environment
 - ECS Fargate: ~$15/month
-- RDS: ~$15/month
+- RDS PostgreSQL (t3.micro): ~$15/month
 - ALB: ~$20/month
 - VPC Endpoints: ~$20/month
-- **Total**: ~$70-80/month
+- Route53 Hosted Zone: ~$0.50/month
+- ACM SSL Certificate: Free
+- CodePipeline: ~$1/month (single pipeline)
+- **Total**: ~$71-82/month
 
 ### Production Environment (Projected)
 - ECS Fargate (3-10 tasks): ~$150-200/month
@@ -266,8 +285,25 @@ module "s3" {
 ## 🔄 Document Updates
 
 - **Created**: November 2024
-- **Last Updated**: December 2024 (CodePipeline deployment status)
-- **Next Review**: January 2025
+- **Last Updated**: October 2025 (Route53 and SSL deployment status)
+- **Next Review**: November 2025
+
+## 📋 Recent Accomplishments (October 2025)
+
+### Route53 & SSL Infrastructure
+- ✅ Deployed Route53 module for DNS management
+- ✅ Created and validated ACM SSL certificate for api-dev.lichnails.co.uk
+- ✅ Configured DNS records for ALB integration
+- ✅ Set up CNAME for Vercel frontend (usa-berko subdomain)
+- ✅ Using existing registrar-managed hosted zone (cost optimization)
+
+### Development Environment Status
+- ✅ Full HTTPS support with valid SSL certificate
+- ✅ Custom domain routing operational
+- ✅ Frontend-backend integration via custom domains
+- ✅ Automated CI/CD pipeline from GitHub to ECS
+- ✅ Complete Parameter Store configuration
+- ✅ Multi-AZ networking with security hardening
 
 ---
 

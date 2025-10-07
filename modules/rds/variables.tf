@@ -40,10 +40,19 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  description = "Master password for the database (will be stored in Parameter Store)"
+  description = "Master password for the database (will be stored in Parameter Store). Must be provided via terraform.tfvars."
   type        = string
   sensitive   = true
-  default     = "" # If empty, will generate random password
+
+  validation {
+    condition     = length(var.db_password) >= 16
+    error_message = "Database password must be at least 16 characters long for security."
+  }
+
+  validation {
+    condition     = can(regex("^[^@#:/?&=%]*$", var.db_password))
+    error_message = "Database password must not contain URL-problematic characters: @ # : / ? & = %"
+  }
 }
 
 variable "db_port" {

@@ -340,8 +340,34 @@ module "app_service" {
 }
 
 
+# ElastiCache Redis Module - Session storage and message broker
+module "redis" {
+  source = "../../modules/elasticache"
+
+  # Required configuration
+  app_name           = var.app_name
+  environment        = var.environment
+  vpc_id             = module.networking.vpc_id
+  subnet_ids         = [module.networking.private_subnet_id]
+  security_group_ids = [aws_security_group.redis.id]
+
+  # Optional: Override defaults for production
+  # node_type                = "cache.t3.small"  # Upgrade for production
+  # num_cache_nodes          = 2                 # Add replica for HA
+  # multi_az_enabled         = true              # Enable for production
+  # snapshot_retention_limit = 5                 # Enable backups for production
+  # enable_auth_token        = true              # Enable for production security
+  # auth_token               = var.redis_auth_token
+
+  tags = {
+    Environment = var.environment
+    Project     = var.app_name
+    ManagedBy   = "Terraform"
+    Purpose     = "Session storage and message broker"
+  }
+}
+
 # TODO: Next steps:
-# 1. ElastiCache Redis module
-# 2. Worker tasks module (for Dramatiq background jobs)
-# 3. S3 module for static files
-# 4. CloudFront CDN module
+# 1. Worker tasks module (for Dramatiq background jobs)
+# 2. S3 module for static files
+# 3. CloudFront CDN module
