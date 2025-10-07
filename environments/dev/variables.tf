@@ -107,10 +107,10 @@ variable "django_secret_key" {
 }
 
 variable "database_password" {
-  description = "Database password (sensitive)"
+  description = "RDS database password (sensitive). Must be at least 16 characters and not contain URL-problematic characters: @ # : / ? & = %"
   type        = string
   sensitive   = true
-  default     = ""
+  # No default - must be provided in terraform.tfvars
 }
 
 variable "twilio_account_sid" {

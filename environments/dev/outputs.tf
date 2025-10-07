@@ -271,3 +271,25 @@ output "codestar_connection_arn" {
   description = "ARN of the CodeStar connection"
   value       = module.codepipeline.codestar_connection_arn
 }
+
+# ElastiCache Redis Outputs
+output "redis_url" {
+  description = "Redis connection URL (use in ECS task secrets)"
+  value       = module.redis.redis_url
+  sensitive   = true
+}
+
+output "redis_parameter_store_path" {
+  description = "Parameter Store path for Redis URL (use in ECS secrets configuration)"
+  value       = module.redis.parameter_store_path
+}
+
+output "redis_endpoint" {
+  description = "Redis primary endpoint address"
+  value       = module.redis.redis_endpoint
+}
+
+output "redis_cluster_id" {
+  description = "Redis cluster ID"
+  value       = module.redis.cluster_id
+}

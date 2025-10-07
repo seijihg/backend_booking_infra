@@ -62,6 +62,16 @@ resource "aws_acm_certificate_validation" "backend" {
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
+# CNAME record for Vercel frontend - usa-berko subdomain
+# Using Vercel's project-specific DNS for better routing
+resource "aws_route53_record" "vercel_usa_berko" {
+  zone_id = module.route53.zone_id
+  name    = "usa-berko.lichnails.co.uk"
+  type    = "CNAME"
+  ttl     = 300
+  records = ["e79677f73830cf90.vercel-dns-017.com"]
+}
+
 # Output the certificate ARN for use in ALB
 output "certificate_arn" {
   description = "The ARN of the validated ACM certificate"
@@ -77,35 +87,4 @@ output "route53_name_servers" {
 output "api_dev_url" {
   description = "API development URL"
   value       = "https://api-dev.lichnails.co.uk"
-}
-
-output "important_note" {
-  value = <<-EOT
-    
-    ========================================
-    IMPORTANT: DNS Configuration Required
-    ========================================
-    
-    1. Update your domain registrar (where you bought lichnails.co.uk) with these Route 53 name servers:
-       ${join("\n       ", module.route53.name_servers)}
-    
-    2. For Vercel frontend (book.lichnails.co.uk):
-       - Add these records manually in Route 53 console after deployment:
-       - CNAME for book.lichnails.co.uk → cname.vercel-dns.com
-       - Follow Vercel's custom domain setup instructions
-       - This will host your Next.js booking frontend
-    
-    3. Your backend API will be accessible at:
-       - https://api-dev.lichnails.co.uk (Django REST API)
-       - Django Admin: https://api-dev.lichnails.co.uk/admin/
-    
-    4. Architecture Overview:
-       - Frontend: book.lichnails.co.uk → Vercel (Next.js)
-       - Backend API: api-dev.lichnails.co.uk → AWS ALB → ECS (Django)
-       - Production API: api.lichnails.co.uk (future)
-    
-    5. DNS propagation can take up to 48 hours
-    ========================================
-    
-  EOT
 }

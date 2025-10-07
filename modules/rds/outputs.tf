@@ -38,7 +38,7 @@ output "db_username" {
 
 output "db_password" {
   description = "The master password"
-  value       = local.create_random_password ? random_password.db_password[0].result : var.db_password
+  value       = var.db_password
   sensitive   = true
 }
 
@@ -100,14 +100,14 @@ output "db_maintenance_window" {
 # Connection string for applications
 output "db_connection_string" {
   description = "PostgreSQL connection string"
-  value       = "postgresql://${aws_db_instance.main.username}:${local.create_random_password ? random_password.db_password[0].result : var.db_password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
+  value       = "postgresql://${aws_db_instance.main.username}:${var.db_password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
   sensitive   = true
 }
 
 # Django-specific DATABASE_URL format
 output "django_database_url" {
   description = "Django DATABASE_URL format"
-  value       = "postgres://${aws_db_instance.main.username}:${local.create_random_password ? random_password.db_password[0].result : var.db_password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
+  value       = "postgres://${aws_db_instance.main.username}:${var.db_password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
   sensitive   = true
 }
 
@@ -120,5 +120,12 @@ output "parameter_store_paths" {
     name     = "${local.parameter_store_path}/name"
     username = "${local.parameter_store_path}/username"
     password = "${local.parameter_store_path}/password"
+    url      = "${local.parameter_store_path}/url"
   } : null
+}
+
+# DATABASE_URL Parameter Store path for ECS task definitions
+output "database_url_parameter_path" {
+  description = "Parameter Store path for DATABASE_URL (use in ECS secrets)"
+  value       = var.update_parameter_store ? aws_ssm_parameter.database_url[0].name : null
 }

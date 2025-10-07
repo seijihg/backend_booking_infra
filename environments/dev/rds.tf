@@ -16,7 +16,7 @@ module "rds" {
   # RDS requires alphanumeric only (no hyphens or underscores in db_name)
   db_name     = "${replace(var.app_name, "-", "")}${var.environment}"   # Results in "backendbookingdev"
   db_username = "${replace(var.app_name, "-", "_")}_${var.environment}" # Username can have underscores
-  # Password will be auto-generated and stored in Parameter Store
+  db_password = var.database_password # Must be provided in terraform.tfvars
 
   # Dev environment settings (cost-optimized)
   instance_class        = "db.t3.micro" # Free tier eligible

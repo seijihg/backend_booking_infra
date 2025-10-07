@@ -4,18 +4,6 @@ locals {
   instance_identifier    = var.instance_identifier != "" ? var.instance_identifier : "${var.app_name}-${var.environment}-db"
   final_snapshot_id      = var.final_snapshot_identifier != "" ? var.final_snapshot_identifier : "${local.instance_identifier}-final-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
   parameter_store_path   = var.parameter_store_path != "" ? var.parameter_store_path : "/${var.app_name}/${var.environment}/database"
-  
-  # Generate random password if not provided
-  create_random_password = var.db_password == ""
-}
-
-# Generate random password if not provided
-resource "random_password" "db_password" {
-  count   = local.create_random_password ? 1 : 0
-  length  = 32
-  special = true
-  # Exclude problematic characters for URLs and shells
-  override_special = "!#$%&*()-_=+[]{}:?"
 }
 
 # Security Group for RDS
@@ -136,7 +124,7 @@ resource "aws_db_instance" "main" {
   # Credentials
   db_name  = var.db_name
   username = var.db_username
-  password = local.create_random_password ? random_password.db_password[0].result : var.db_password
+  password = var.db_password
   port     = var.db_port
 
   # Instance
@@ -248,8 +236,26 @@ resource "aws_ssm_parameter" "db_password" {
   name        = "${local.parameter_store_path}/password"
   description = "Database master password"
   type        = "SecureString"
-  value       = local.create_random_password ? random_password.db_password[0].result : var.db_password
+  value       = var.db_password
   overwrite   = true
 
   tags = var.tags
+}
+
+# Combined DATABASE_URL for Django (single connection string)
+resource "aws_ssm_parameter" "database_url" {
+  count = var.update_parameter_store ? 1 : 0
+
+  name        = "${local.parameter_store_path}/url"
+  description = "PostgreSQL connection URL for Django (postgresql://user:pass@host:port/dbname)"
+  type        = "SecureString"
+  # URL-encode password to handle special characters (# @ : / ? etc.)
+  value       = "postgresql://${var.db_username}:${urlencode(var.db_password)}@${aws_db_instance.main.address}:${var.db_port}/${var.db_name}"
+  overwrite   = true
+
+  tags = var.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
