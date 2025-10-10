@@ -367,7 +367,95 @@ module "redis" {
   }
 }
 
+# Dramatiq Worker Module - Background job processing
+module "dramatiq_worker" {
+  source = "../../modules/ecs-worker"
+
+  # Basic Configuration
+  app_name     = var.app_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # ECS Cluster
+  ecs_cluster_id   = module.ecs_cluster.cluster_id
+  ecs_cluster_name = module.ecs_cluster.cluster_name
+
+  # Container - Using same image as web tasks
+  ecr_repository_url = aws_ecr_repository.app.repository_url
+  image_tag          = "latest"
+
+  # Worker Configuration (minimal for cost optimization)
+  worker_count       = var.worker_count
+  worker_cpu         = var.worker_cpu
+  worker_memory      = var.worker_memory
+  worker_concurrency = var.worker_concurrency
+  worker_queues      = var.worker_queues
+
+  # Django settings (removed - not a module variable)
+
+  # Network - Using public subnet for internet access (Twilio API)
+  # TODO: Use private subnet + NAT Gateway for production
+  private_subnet_ids = module.networking.public_subnet_ids  # Using public for dev (workers need internet)
+  security_group_ids = [aws_security_group.ecs_tasks.id]
+  assign_public_ip   = true  # Required when using public subnets
+
+  # Secrets - Same as web tasks (from Parameter Store)
+  secrets_from_parameter_store = [
+    {
+      name      = "DJANGO_SECRET_KEY"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/app/django-secret-key"
+    },
+    {
+      name      = "DATABASE_URL"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/database/url"
+    },
+    {
+      name      = "REDIS_URL"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/redis/url"
+    },
+    {
+      name      = "ALLOWED_HOSTS"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/app/allowed-hosts"
+    },
+    {
+      name      = "TWILIO_ACCOUNT_SID"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/third-party/twilio-account-sid"
+    },
+    {
+      name      = "TWILIO_AUTH_TOKEN"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/third-party/twilio-auth-token"
+    },
+    {
+      name      = "TWILIO_PHONE_NUMBER"
+      valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/backend-booking/${var.environment}/third-party/twilio-phone-number"
+    }
+  ]
+
+  # Additional environment variables (workers don't need proxy headers)
+  additional_environment_variables = []
+
+  # Cost Optimization
+  use_fargate_spot   = true  # 70% cost savings for dev
+  log_retention_days = var.log_retention_days
+
+  # Monitoring (disabled for dev to save costs)
+  enable_monitoring_alarms = false
+
+  tags = {
+    Environment = var.environment
+    Project     = var.app_name
+    ManagedBy   = "Terraform"
+    Purpose     = "Background job processing"
+  }
+
+  # Ensure cluster and Redis are ready before creating workers
+  depends_on = [
+    module.ecs_cluster,
+    module.redis,
+    module.vpc_endpoints
+  ]
+}
+
 # TODO: Next steps:
-# 1. Worker tasks module (for Dramatiq background jobs)
-# 2. S3 module for static files
-# 3. CloudFront CDN module
+# 1. S3 module for static files
+# 2. CloudFront CDN module
