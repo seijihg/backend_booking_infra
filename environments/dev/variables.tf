@@ -215,6 +215,37 @@ variable "cloudfront_distribution_id" {
   default     = ""
 }
 
+# Worker Task Configuration
+variable "worker_count" {
+  description = "Number of Dramatiq worker tasks (no auto-scaling for cost saving)"
+  type        = number
+  default     = 1
+}
+
+variable "worker_cpu" {
+  description = "CPU units for worker tasks (256 = 0.25 vCPU, minimum for Fargate)"
+  type        = string
+  default     = "256"
+}
+
+variable "worker_memory" {
+  description = "Memory for worker tasks in MB (512 is minimum for Fargate)"
+  type        = string
+  default     = "512"
+}
+
+variable "worker_concurrency" {
+  description = "Number of concurrent threads per worker (lower = less resource usage)"
+  type        = number
+  default     = 2
+}
+
+variable "worker_queues" {
+  description = "Comma-separated list of queue names to process"
+  type        = string
+  default     = "default,notifications,bookings"
+}
+
 # variable "db_instance_class" {
 #   description = "RDS instance class"
 #   type        = string
