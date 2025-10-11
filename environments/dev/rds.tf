@@ -43,6 +43,5 @@ module "rds" {
     ManagedBy   = "Terraform"
   }
 
-  # Ensure VPC endpoints are ready before creating RDS
-  depends_on = [module.vpc_endpoints]
+  # RDS doesn't depend on VPC endpoints - it's in private subnet and doesn't need internet
 }

@@ -16,7 +16,6 @@ module "networking" {
   # Cost optimization for dev environment
   enable_nat_gateway   = false  # Saves ~$45/month - private subnet won't have internet access
   enable_flow_logs     = false  # Optional - enable for debugging
-  enable_vpc_endpoints = false  # Optional - saves money in dev
 
   tags = {
     Environment = var.environment
