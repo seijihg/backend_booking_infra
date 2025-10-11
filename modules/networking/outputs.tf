@@ -93,12 +93,4 @@ output "availability_zone" {
   value       = data.aws_availability_zones.available.names[0]
 }
 
-output "vpc_endpoints_sg_id" {
-  description = "The ID of the security group for VPC endpoints (if enabled)"
-  value       = var.enable_vpc_endpoints ? aws_security_group.vpc_endpoints[0].id : null
-}
-
-output "s3_endpoint_id" {
-  description = "The ID of the S3 VPC endpoint (if enabled)"
-  value       = var.enable_vpc_endpoints ? aws_vpc_endpoint.s3[0].id : null
-}
+# VPC endpoint outputs removed - no longer needed

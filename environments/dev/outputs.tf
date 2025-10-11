@@ -188,22 +188,7 @@ output "parameter_store_common_path" {
   value       = "/backend-booking/common"
 }
 
-# VPC Endpoints Outputs
-output "vpc_endpoints_created" {
-  description = "List of VPC endpoints created"
-  value = {
-    s3          = module.vpc_endpoints.s3_endpoint_id != null ? "✅ Created (Free!)" : "❌ Not created"
-    ssm         = module.vpc_endpoints.ssm_endpoint_id != null ? "✅ Created" : "❌ Not created"
-    ecr_api     = module.vpc_endpoints.ecr_api_endpoint_id != null ? "✅ Created" : "❌ Not created"
-    ecr_docker  = module.vpc_endpoints.ecr_dkr_endpoint_id != null ? "✅ Created" : "❌ Not created"
-    logs        = module.vpc_endpoints.logs_endpoint_id != null ? "✅ Created" : "❌ Not created"
-  }
-}
-
-output "vpc_endpoints_monthly_cost" {
-  description = "Estimated monthly cost for VPC endpoints"
-  value       = "~$30-35/month (vs $45/month for NAT Gateway)"
-}
+# VPC Endpoints have been removed - tasks use public subnets with internet access
 
 # RDS Outputs
 output "rds_endpoint" {

@@ -67,11 +67,6 @@ variable "flow_logs_retention_days" {
   default     = 7
 }
 
-variable "enable_vpc_endpoints" {
-  description = "Enable VPC endpoints for AWS services to reduce data transfer costs"
-  type        = bool
-  default     = false
-}
 
 variable "tags" {
   description = "A map of tags to assign to all resources"

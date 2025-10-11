@@ -244,38 +244,9 @@ module "app_task_definition" {
   }
 }
 
-# VPC Endpoints Module - Private connectivity to AWS services (no NAT Gateway needed)
-module "vpc_endpoints" {
-  source = "../../modules/vpc-endpoints"
-
-  vpc_id      = module.networking.vpc_id
-  vpc_cidr    = module.networking.vpc_cidr
-  app_name    = var.app_name
-  environment = var.environment
-  aws_region  = var.aws_region
-
-  # Subnets and route tables for endpoints
-  private_subnet_ids      = module.networking.private_subnet_ids
-  private_route_table_ids = [module.networking.private_route_table_id]
-
-  # Security groups that need access to endpoints
-  security_group_ids = [
-    aws_security_group.ecs_tasks.id
-  ]
-
-  # Enable all required endpoints for ECS
-  enable_ssm_endpoints = true # For Parameter Store
-  enable_ecr_endpoints = true # For Docker images
-  enable_s3_endpoint   = true # For ECR layers (free!)
-  enable_logs_endpoint = true # For CloudWatch logs
-
-  tags = {
-    Environment = var.environment
-    Project     = var.app_name
-    ManagedBy   = "Terraform"
-    Purpose     = "Private AWS service access"
-  }
-}
+# VPC Endpoints Module - REMOVED
+# Not needed since ECS tasks run in public subnets with public IPs and have direct internet access
+# Tasks can reach AWS services (ECR, SSM, CloudWatch) via the internet gateway
 
 # ECS Service Module - Manages running tasks with auto-scaling and load balancer integration
 module "app_service" {
@@ -294,11 +265,11 @@ module "app_service" {
   launch_type      = "FARGATE"
   platform_version = "LATEST"
 
-  # Network Configuration - Back to private subnets with VPC endpoints
+  # Network Configuration - Using public subnets for internet access
   vpc_id             = module.networking.vpc_id
-  subnet_ids         = [module.networking.private_subnet_id] # Private subnet (secure)
+  subnet_ids         = module.networking.public_subnet_ids # Public subnets for direct internet access
   security_group_ids = [aws_security_group.ecs_tasks.id]
-  assign_public_ip   = false # No public IP needed with VPC endpoints
+  assign_public_ip   = true # Required for Fargate tasks in public subnets
 
   # Load Balancer Integration
   enable_load_balancer = true
@@ -335,8 +306,7 @@ module "app_service" {
     ManagedBy   = "Terraform"
   }
 
-  # Ensure VPC endpoints are created before the service
-  depends_on = [module.vpc_endpoints]
+  # No dependencies on VPC endpoints - tasks use public subnets
 }
 
 
@@ -451,8 +421,7 @@ module "dramatiq_worker" {
   # Ensure cluster and Redis are ready before creating workers
   depends_on = [
     module.ecs_cluster,
-    module.redis,
-    module.vpc_endpoints
+    module.redis
   ]
 }
 
