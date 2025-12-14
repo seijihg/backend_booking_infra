@@ -17,11 +17,11 @@ phases:
       - echo Building Docker image...
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      
+
       # Run tests (optional - uncomment if you have tests)
       # - echo Running tests...
       # - docker run --rm $REPOSITORY_URI:latest python manage.py test
-      
+
       # Security scan (optional but recommended)
       - echo Running security scan...
       - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL --exit-code 0 $REPOSITORY_URI:latest || true
@@ -32,13 +32,17 @@ phases:
       - echo Pushing the Docker images to ECR...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      
-      # Create imagedefinitions.json for ECS deployment
-      - echo Writing image definitions file...
-      # Container name must match the task definition exactly
+
+      # Create imagedefinitions.json for web app ECS deployment
+      - echo Writing image definitions for web app...
       - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
       - cat imagedefinitions.json
-      
+
+      # Create worker-imagedefinitions.json for worker ECS deployment (same image, different container name)
+      - echo Writing image definitions for worker...
+      - printf '[{"name":"%s","imageUri":"%s"}]' $WORKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > worker-imagedefinitions.json
+      - cat worker-imagedefinitions.json
+
       # Update Parameter Store with new image tag (optional)
       - |
         if [ "$ENVIRONMENT" = "prod" ]; then
@@ -51,6 +55,7 @@ phases:
 artifacts:
   files:
     - imagedefinitions.json
+    - worker-imagedefinitions.json
   name: BuildArtifacts
 
 cache:

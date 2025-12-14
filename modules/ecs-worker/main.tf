@@ -270,10 +270,8 @@ resource "aws_ecs_service" "worker" {
 
   tags = var.tags
 
-  # Ignore task definition changes from external sources
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
+  # Note: lifecycle ignore_changes removed to allow CodePipeline to update task definitions
+  # CodePipeline now manages both web app and worker deployments in parallel
 }
 
 # CloudWatch Alarms (optional, for monitoring without auto-scaling)

@@ -48,13 +48,38 @@ variable "ecs_cluster_name" {
 }
 
 variable "ecs_service_name" {
-  description = "Name of the ECS service to deploy to"
+  description = "Name of the ECS web app service to deploy to"
   type        = string
   default     = ""  # Optional - only needed when service exists
 }
 
 variable "container_name" {
-  description = "Name of the container in the task definition (defaults to {app_name}-app)"
+  description = "Name of the web app container in the task definition (defaults to {app_name}-app)"
+  type        = string
+  default     = ""
+}
+
+# Worker Service Configuration
+variable "ecs_worker_service_name" {
+  description = "Name of the ECS worker service to deploy to"
+  type        = string
+  default     = ""  # Optional - only needed when worker service exists
+}
+
+variable "worker_container_name" {
+  description = "Name of the worker container in the task definition (defaults to {app_name}-worker)"
+  type        = string
+  default     = ""
+}
+
+variable "ecs_worker_task_execution_role_arn" {
+  description = "ARN of the ECS worker task execution role (required if ecs_worker_service_name is set)"
+  type        = string
+  default     = ""
+}
+
+variable "ecs_worker_task_role_arn" {
+  description = "ARN of the ECS worker task role (required if ecs_worker_service_name is set)"
   type        = string
   default     = ""
 }
@@ -126,12 +151,6 @@ variable "deployment_timeout" {
   description = "ECS deployment timeout in minutes"
   type        = number
   default     = 10
-}
-
-variable "require_manual_approval" {
-  description = "Require manual approval before deployment"
-  type        = bool
-  default     = false
 }
 
 # Logging
