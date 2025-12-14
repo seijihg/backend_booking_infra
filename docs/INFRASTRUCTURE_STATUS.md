@@ -1,6 +1,6 @@
 # Infrastructure Status & Future Modules
 
-## Current Date: October 2025
+## Current Date: December 2024
 
 This document tracks the current state of the Backend Booking infrastructure and planned future enhancements.
 
@@ -9,10 +9,12 @@ This document tracks the current state of the Backend Booking infrastructure and
 ### CI/CD Infrastructure
 - **CodePipeline Module** (`modules/codepipeline/`)
   - Automated CI/CD pipeline for development environment
-  - GitHub integration with webhook triggers
+  - GitHub integration via CodeStar Connections
   - CodeBuild for Docker image building
   - ECR repository management
-  - ECS service deployments
+  - **Parallel ECS deployments** (Web App + Worker simultaneously)
+  - Same Docker image deployed to both services with different startup commands
+  - IAM PassRole configured for all 4 ECS roles (web + worker)
   - Status: ✅ Deployed and operational (December 2024)
 
 ### Core Infrastructure
@@ -46,16 +48,25 @@ This document tracks the current state of the Backend Booking infrastructure and
   - Deployment circuit breaker enabled
   - Status: ✅ Running with healthy tasks
 
+- **ECS Worker Module** (`modules/ecs-worker/`)
+  - Dramatiq background worker tasks
+  - Separate task definition for workers (same image, different command)
+  - Auto-scaling based on queue depth
+  - CloudWatch metrics integration
+  - **Integrated with CodePipeline for automatic deployments**
+  - Status: ✅ Deployed and operational (December 2024)
+
 - **RDS PostgreSQL** (`modules/rds/`)
   - Single-AZ instance for dev (Multi-AZ ready for prod)
   - Automated backups and parameter groups
   - SSM Parameter Store integration
   - Status: ✅ Deployed and accessible
 
-- **VPC Endpoints** (`modules/vpc-endpoints/`)
-  - Private connectivity to AWS services
-  - ECR, SSM, CloudWatch endpoints
-  - Status: ✅ Configured for secure access
+- **ElastiCache Redis** (`modules/elasticache/`)
+  - Redis cluster for session storage and Dramatiq message broker
+  - Single node for dev, cluster mode available for prod
+  - Security group integration
+  - Status: ✅ Deployed and operational (December 2024)
 
 ### DNS & SSL Infrastructure
 - **Route53 Module** (`modules/route53/`)
@@ -66,49 +77,48 @@ This document tracks the current state of the Backend Booking infrastructure and
   - Status: ✅ Deployed and operational (October 2025)
 
 ### Supporting Infrastructure
+- **Terraform Backend** (`modules/terraform-backend/`)
+  - S3 bucket for state storage
+  - DynamoDB table for state locking
+  - Status: ✅ Configured and operational
+
 - **ECR Repository**: ✅ Created with lifecycle policies
 - **Parameter Store**: ✅ All parameters configured
 - **Security Groups**: ✅ Properly configured with least privilege
 - **CloudWatch Logs**: ✅ Centralized logging enabled
 
-## 🚧 Modules Ready but Not Deployed
+## 🚧 Modules Ready for Production Deployment
 
-### Redis/ElastiCache Module
-**Path**: `modules/elasticache/` (needs creation)
+### ElastiCache Redis Module
+**Path**: `modules/elasticache/`
+**Dev Status**: ✅ Deployed and operational (December 2024)
+**Prod Status**: 🚧 Ready for deployment
 **Purpose**: Session storage and Dramatiq message broker
-**Configuration Needed**:
-```hcl
-module "redis" {
-  source = "../../modules/elasticache"
-  
-  app_name    = var.app_name
-  environment = var.environment
-  vpc_id      = module.networking.vpc_id
-  subnet_ids  = module.networking.private_subnet_ids
-  
-  node_type          = "cache.t3.micro"  # For dev
-  num_cache_nodes    = 1
-  engine_version     = "7.0"
-  parameter_group    = "default.redis7"
-  
-  security_group_ids = [aws_security_group.redis.id]
-}
-```
 
-### S3 Static/Media Storage Module
+### ECS Worker Module (Dramatiq)
+**Path**: `modules/ecs-worker/`
+**Dev Status**: ✅ Deployed and operational (December 2024)
+**Prod Status**: 🚧 Ready for deployment
+**Purpose**: Background job processing with Dramatiq
+**Note**: Workers now deploy automatically via CodePipeline in parallel with web app
+
+## 📋 Future Modules to Create
+
+### 1. S3 Static/Media Storage Module
 **Path**: `modules/s3/` (needs creation)
+**Priority**: Medium
 **Purpose**: Static files and user uploads
 **Configuration Needed**:
 ```hcl
 module "s3" {
   source = "../../modules/s3"
-  
+
   app_name    = var.app_name
   environment = var.environment
-  
+
   enable_versioning = false  # true for production
   enable_encryption = true
-  
+
   cors_allowed_origins = ["*"]  # Restrict in production
   lifecycle_rules = {
     media_cleanup = {
@@ -119,9 +129,7 @@ module "s3" {
 }
 ```
 
-## 📋 Future Modules to Implement
-
-### 1. CloudFront CDN Module
+### 2. CloudFront CDN Module
 **Priority**: High for Production
 **Purpose**: Global content delivery for static assets
 **Features**:
@@ -131,45 +139,17 @@ module "s3" {
 - Security headers
 - WAF integration (optional)
 
-### 2. Route53 DNS Module
-**Status**: ✅ **DEPLOYED TO DEVELOPMENT**
-**Priority**: High for Production
-**Purpose**: DNS management and health checks
+### 3. VPC Endpoints Module
+**Priority**: Medium
+**Purpose**: Private connectivity to AWS services without NAT Gateway
 **Features**:
-- ✅ Hosted zone management (using existing registrar zone)
-- ✅ A records for ALB (api-dev.lichnails.co.uk)
-- ✅ ACM SSL certificate with DNS validation
-- ✅ CNAME for Vercel frontend (usa-berko.lichnails.co.uk)
-- 🔄 Health checks and failover (pending)
-**Production Status**: Ready for deployment with prod subdomain
+- ECR API and DKR endpoints
+- SSM, SSM Messages, EC2 Messages endpoints
+- CloudWatch Logs endpoint
+- S3 Gateway endpoint
+- Cost savings by avoiding NAT Gateway for AWS traffic
 
-### 3. Dramatiq Worker Module
-**Priority**: High
-**Purpose**: Background job processing
-**Features**:
-- Separate ECS task definition for workers
-- Auto-scaling based on queue depth
-- Dead letter queue handling
-- CloudWatch metrics integration
-
-### 4. CodePipeline CI/CD Module
-**Status**: ✅ **PRODUCTION READY**
-**Priority**: Completed
-**Purpose**: Automated deployments
-**Current**: Module exists at `modules/codepipeline/`
-**Development Status**: ✅ Successfully deployed and operational
-**Deployment Date**: December 2024
-**Features Implemented**:
-- ✅ GitHub webhook triggers (automated from `dev` branch)
-- ✅ CodeBuild for Docker builds
-- ✅ ECR image push and tagging
-- ✅ ECS service updates (rolling deployment)
-- ✅ Parameter Store integration
-- ✅ CloudWatch logging
-**Production Status**: ✅ Module ready for deployment to `main` branch
-**Next Steps**: Deploy production pipeline when prod environment is configured
-
-### 5. Backup Module
+### 4. Backup Module
 **Priority**: Medium
 **Purpose**: Automated backup strategy
 **Features**:
@@ -178,7 +158,7 @@ module "s3" {
 - EBS volume snapshots
 - Backup vault with lifecycle policies
 
-### 6. Monitoring & Alerting Module
+### 5. Monitoring & Alerting Module
 **Priority**: Medium
 **Purpose**: Comprehensive observability
 **Features**:
@@ -187,7 +167,7 @@ module "s3" {
 - Lambda for custom metrics
 - X-Ray tracing (optional)
 
-### 7. WAF Module
+### 6. WAF Module
 **Priority**: Low for Dev, High for Prod
 **Purpose**: Web application firewall
 **Features**:
@@ -196,7 +176,7 @@ module "s3" {
 - OWASP Top 10 protection
 - Custom rule groups
 
-### 8. Secrets Rotation Module
+### 7. Secrets Rotation Module
 **Priority**: Low for Dev, Medium for Prod
 **Purpose**: Automatic credential rotation
 **Features**:
@@ -205,7 +185,7 @@ module "s3" {
 - Lambda rotation functions
 - SSM Parameter Store integration
 
-### 9. Auto-scaling Module Enhancements
+### 8. Auto-scaling Enhancements
 **Priority**: Low
 **Purpose**: Advanced scaling strategies
 **Features**:
@@ -214,7 +194,7 @@ module "s3" {
 - Step scaling policies
 - Scheduled scaling actions
 
-### 10. Cost Optimization Module
+### 9. Cost Optimization Module
 **Priority**: Low
 **Purpose**: Cost management
 **Features**:
@@ -228,24 +208,28 @@ module "s3" {
 ### Immediate (This Week)
 1. ✅ Fix ALB health checks (COMPLETED)
 2. ✅ Resolve SSM parameter conflicts (COMPLETED)
-3. ✅ Configure Route53 DNS and SSL (COMPLETED - October 2025)
-4. Deploy Redis/ElastiCache for session storage
-5. Create S3 buckets for static files
+3. ✅ Configure Route53 DNS and SSL (COMPLETED - October 2024)
+4. ✅ Create ElastiCache module (COMPLETED - October 2024)
+5. ✅ Create ECS Worker module for Dramatiq (COMPLETED - October 2024)
+6. ✅ Deploy ElastiCache Redis to development environment (COMPLETED - December 2024)
+7. ✅ Deploy ECS Workers to development environment (COMPLETED - December 2024)
+8. ✅ Configure parallel worker deployment in CodePipeline (COMPLETED - December 2024)
 
 ### Short Term (Next 2 Weeks)
 1. ✅ Set up CI/CD pipeline with CodePipeline (COMPLETED - December 2024)
-2. ✅ Configure Route53 for custom domain (COMPLETED - October 2025)
-3. Test end-to-end HTTPS connectivity (api-dev.lichnails.co.uk)
-4. Set up CloudFront CDN for static assets
-5. Deploy Dramatiq workers for background jobs
+2. ✅ Configure Route53 for custom domain (COMPLETED - October 2024)
+3. ✅ Test end-to-end HTTPS connectivity (api-dev.lichnails.co.uk) (COMPLETED)
+4. Create S3 module for static files
+5. Set up CloudFront CDN for static assets
 6. Implement basic monitoring dashboards
 
 ### Medium Term (Next Month)
 1. Configure production environment with api.lichnails.co.uk subdomain
 2. Deploy CodePipeline to production environment (module ready)
-3. Implement comprehensive backup strategy
-4. Add advanced monitoring and alerting
-5. Deploy WAF for production readiness
+3. Deploy ElastiCache and Workers to production
+4. Implement comprehensive backup strategy
+5. Add advanced monitoring and alerting
+6. Deploy WAF for production readiness
 
 ### Long Term (Next Quarter)
 1. Multi-region disaster recovery planning
@@ -253,17 +237,58 @@ module "s3" {
 3. Cost optimization initiatives
 4. Security hardening and compliance audits
 
+## 💤 Pausing Infrastructure (Cost Savings)
+
+To minimize costs when not actively using the infrastructure:
+
+### Quick Pause (Recommended)
+```bash
+# Run the pause script
+./scripts/pause-infrastructure.sh
+```
+
+This will:
+- Scale ECS tasks to 0 (saves ~$15/month)
+- Stop RDS instance (saves ~$13/month, storage still ~$2/month)
+- **Reduces cost from ~$70/month to ~$25/month**
+
+### Resume Infrastructure
+```bash
+./scripts/resume-infrastructure.sh
+```
+
+### Manual Terraform Pause
+```bash
+cd environments/dev
+terraform apply -var="infrastructure_paused=true"
+```
+
+### Full Cost Elimination
+To reduce costs to near-zero (~$3/month):
+1. Run pause script
+2. Comment out `module "alb"` in main.tf → saves ~$20/month
+3. Comment out `module "redis"` in main.tf → saves ~$12/month
+
+### Cost Comparison
+
+| State | Monthly Cost | What's Running |
+|-------|-------------|----------------|
+| **Running** | ~$70-80 | All services |
+| **Paused** | ~$25 | ALB, Redis, Route53, storage |
+| **Minimal** | ~$3 | Route53, storage only |
+| **Destroyed** | $0 | Nothing |
+
 ## 📊 Current Infrastructure Costs (Estimated)
 
 ### Development Environment
 - ECS Fargate: ~$15/month
 - RDS PostgreSQL (t3.micro): ~$15/month
 - ALB: ~$20/month
-- VPC Endpoints: ~$20/month
+- ElastiCache Redis: ~$12/month
 - Route53 Hosted Zone: ~$0.50/month
 - ACM SSL Certificate: Free
 - CodePipeline: ~$1/month (single pipeline)
-- **Total**: ~$71-82/month
+- **Total**: ~$65-75/month
 
 ### Production Environment (Projected)
 - ECS Fargate (3-10 tasks): ~$150-200/month
@@ -285,25 +310,58 @@ module "s3" {
 ## 🔄 Document Updates
 
 - **Created**: November 2024
-- **Last Updated**: October 2025 (Route53 and SSL deployment status)
-- **Next Review**: November 2025
+- **Last Updated**: December 2024 (Parallel worker deployment configured)
+- **Next Review**: January 2025
 
-## 📋 Recent Accomplishments (October 2025)
+## 📋 Recent Accomplishments
 
-### Route53 & SSL Infrastructure
+### December 2024
+- ✅ Deployed ElastiCache Redis to development environment
+- ✅ Deployed ECS Workers (Dramatiq) to development environment
+- ✅ Fixed worker health check configuration (process-based check)
+- ✅ Verified Redis connectivity and worker operation
+- ✅ **Configured parallel worker deployment in CodePipeline**
+  - Both Web App and Worker now deploy simultaneously
+  - Same Docker image with different container names
+  - IAM PassRole configured for all 4 ECS roles
+  - Removed lifecycle ignore_changes from worker ECS service
+
+### November 2024
+- ✅ Updated documentation to reflect actual module inventory
+- ✅ Verified all 11 Terraform modules are implemented
+
+### October 2024
+- ✅ Created ElastiCache module for Redis
+- ✅ Created ECS Worker module for Dramatiq background tasks
 - ✅ Deployed Route53 module for DNS management
 - ✅ Created and validated ACM SSL certificate for api-dev.lichnails.co.uk
 - ✅ Configured DNS records for ALB integration
 - ✅ Set up CNAME for Vercel frontend (usa-berko subdomain)
-- ✅ Using existing registrar-managed hosted zone (cost optimization)
 
 ### Development Environment Status
 - ✅ Full HTTPS support with valid SSL certificate
 - ✅ Custom domain routing operational
 - ✅ Frontend-backend integration via custom domains
-- ✅ Automated CI/CD pipeline from GitHub to ECS
+- ✅ **Automated CI/CD pipeline deploys both Web App and Worker in parallel**
 - ✅ Complete Parameter Store configuration
 - ✅ Multi-AZ networking with security hardening
+- ✅ All core modules implemented and ready
+
+## 📦 Module Inventory Summary
+
+| Module | Path | Status |
+|--------|------|--------|
+| ALB | `modules/alb/` | ✅ Deployed |
+| CodePipeline | `modules/codepipeline/` | ✅ Deployed |
+| ECS Cluster | `modules/ecs-cluster/` | ✅ Deployed |
+| ECS Service | `modules/ecs-service/` | ✅ Deployed |
+| ECS Task Definition | `modules/ecs-task-definition/` | ✅ Deployed |
+| ECS Worker | `modules/ecs-worker/` | ✅ Deployed |
+| ElastiCache | `modules/elasticache/` | ✅ Deployed |
+| Networking | `modules/networking/` | ✅ Deployed |
+| RDS | `modules/rds/` | ✅ Deployed |
+| Route53 | `modules/route53/` | ✅ Deployed |
+| Terraform Backend | `modules/terraform-backend/` | ✅ Deployed |
 
 ---
 

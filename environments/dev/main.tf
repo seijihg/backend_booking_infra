@@ -63,12 +63,18 @@ module "codepipeline" {
   # ECR Configuration
   ecr_repository_url = aws_ecr_repository.app.repository_url
 
-  # ECS Configuration
+  # ECS Configuration - Web App
   ecs_cluster_name            = module.ecs_cluster.cluster_id
   ecs_service_name            = module.app_service.service_name
   container_name              = "${var.app_name}-app" # Must match task definition
   ecs_task_execution_role_arn = module.ecs_cluster.task_execution_role_arn
   ecs_task_role_arn           = module.ecs_cluster.task_role_arn
+
+  # ECS Configuration - Worker (deploys in parallel with web app, same image)
+  ecs_worker_service_name            = module.dramatiq_worker.worker_service_name
+  worker_container_name              = "${var.app_name}-worker" # Must match worker task definition
+  ecs_worker_task_execution_role_arn = module.dramatiq_worker.worker_task_execution_role_arn
+  ecs_worker_task_role_arn           = module.dramatiq_worker.worker_task_role_arn
 
   # Build Configuration
   build_compute_type = "BUILD_GENERAL1_SMALL" # Sufficient for dev
@@ -79,9 +85,8 @@ module "codepipeline" {
   # Note: Build process doesn't need Django secrets - they're injected at runtime by ECS
   build_parameter_store_secrets = {}
 
-  # No manual approval for dev environment
-  require_manual_approval = false
-  deployment_timeout      = 10
+  # Deployment timeout
+  deployment_timeout = 10
 
   # Logging
   log_retention_days = var.log_retention_days
@@ -96,10 +101,11 @@ module "codepipeline" {
     Purpose     = "CI/CD Pipeline"
   }
 
-  # Ensure cluster and service exist before creating pipeline
+  # Ensure cluster, services, and worker exist before creating pipeline
   depends_on = [
     module.ecs_cluster,
-    module.app_service
+    module.app_service,
+    module.dramatiq_worker
   ]
 }
 

@@ -121,40 +121,46 @@ resource "aws_codepipeline" "main" {
     }
   }
 
-  # Deploy Stage - ECS
+  # Deploy Stage - ECS (Web App + Worker in parallel)
   stage {
     name = "Deploy"
 
-    # Manual Approval (optional for production)
-    dynamic "action" {
-      for_each = var.require_manual_approval ? [1] : []
-      content {
-        name     = "ManualApproval"
-        category = "Approval"
-        owner    = "AWS"
-        provider = "Manual"
-        version  = "1"
-
-        configuration = {
-          CustomData = "Please review and approve deployment to ${var.environment}"
-        }
-      }
-    }
-
-    # Deploy to ECS
+    # Deploy Web App to ECS
     action {
-      name            = "Deploy"
+      name            = "Deploy-WebApp"
       category        = "Deploy"
       owner           = "AWS"
       provider        = "ECS"
       version         = "1"
       input_artifacts = ["build_output"]
+      run_order       = 1
 
       configuration = {
         ClusterName       = var.ecs_cluster_name
         ServiceName       = var.ecs_service_name
         FileName          = "imagedefinitions.json"
         DeploymentTimeout = var.deployment_timeout
+      }
+    }
+
+    # Deploy Worker to ECS (parallel with web app - same run_order)
+    dynamic "action" {
+      for_each = var.ecs_worker_service_name != "" ? [1] : []
+      content {
+        name            = "Deploy-Worker"
+        category        = "Deploy"
+        owner           = "AWS"
+        provider        = "ECS"
+        version         = "1"
+        input_artifacts = ["build_output"]
+        run_order       = 1
+
+        configuration = {
+          ClusterName       = var.ecs_cluster_name
+          ServiceName       = var.ecs_worker_service_name
+          FileName          = "worker-imagedefinitions.json"
+          DeploymentTimeout = var.deployment_timeout
+        }
       }
     }
   }

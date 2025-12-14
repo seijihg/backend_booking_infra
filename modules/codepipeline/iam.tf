@@ -1,5 +1,16 @@
 # IAM Roles and Policies for CodePipeline and CodeBuild
 
+# Build list of IAM roles that CodePipeline needs to pass to ECS
+locals {
+  # All ECS roles (web app + worker) - always include both
+  all_ecs_roles = [
+    var.ecs_task_execution_role_arn,
+    var.ecs_task_role_arn,
+    var.ecs_worker_task_execution_role_arn,
+    var.ecs_worker_task_role_arn
+  ]
+}
+
 # CodePipeline IAM Role
 resource "aws_iam_role" "codepipeline" {
   name = "${var.app_name}-${var.environment}-codepipeline-role"
@@ -110,17 +121,14 @@ resource "aws_iam_role_policy" "codepipeline" {
         Resource = "*"
       },
       
-      # IAM PassRole for ECS tasks
+      # IAM PassRole for ECS tasks (web app and worker)
       {
         Sid    = "PassRoleToECS"
         Effect = "Allow"
         Action = [
           "iam:PassRole"
         ]
-        Resource = [
-          var.ecs_task_execution_role_arn,
-          var.ecs_task_role_arn
-        ]
+        Resource = local.all_ecs_roles
         Condition = {
           StringEquals = {
             "iam:PassedToService" = "ecs-tasks.amazonaws.com"

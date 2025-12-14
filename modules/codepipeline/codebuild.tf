@@ -53,6 +53,11 @@ resource "aws_codebuild_project" "main" {
       value = var.container_name != "" ? var.container_name : "${var.app_name}-app"
     }
 
+    environment_variable {
+      name  = "WORKER_CONTAINER_NAME"
+      value = var.worker_container_name != "" ? var.worker_container_name : "${var.app_name}-worker"
+    }
+
     # Parameter Store paths for build-time secrets (if needed)
     dynamic "environment_variable" {
       for_each = var.build_parameter_store_secrets
