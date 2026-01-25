@@ -221,7 +221,7 @@ module "app_task_definition" {
 
   # Django configuration
   allowed_hosts = var.allowed_hosts
-  debug_mode    = var.environment == "dev" ? true : false
+  debug_mode    = var.environment == false
 
   # Optional services (disabled for now)
   enable_twilio              = true # Enable when Twilio is configured
